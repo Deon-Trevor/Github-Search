@@ -5,8 +5,8 @@ import requests
 import streamlit as st
 from streamlit_chat import message
 
-st.set_page_config(page_title="Github Username Search", layout="wide", initial_sidebar_state="auto")
-st.title("Github Username Search")
+st.set_page_config(page_title="Github Search", layout="wide", initial_sidebar_state="auto")
+st.title("Github Search")
 st.text_input("Enter Github Username", key="username")
 
 if st.session_state.username is not None:
@@ -36,6 +36,6 @@ if st.session_state.username is not None:
 
         except TypeError:
             license_name = "None"
-            
+
         st.text(f"{name} : {url}\nDespription : {description}\nLanguage : {language}\nCreated on : {created_at}\nLast update : {updated_at}\nForks : {forks_count}\nStars : {stargazers_count}\nWatchers : {watchers}\nLicence : {license_name}")
         
