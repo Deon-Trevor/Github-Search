@@ -1,9 +1,7 @@
 #!/usr/bin/python3
-import os
 import json
 import requests
 import streamlit as st
-from streamlit_chat import message
 
 st.set_page_config(page_title="Github Search", page_icon="assets/github-mark.png", layout="wide", initial_sidebar_state="auto")
 st.title("Github Search")
