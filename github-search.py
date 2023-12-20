@@ -1,20 +1,27 @@
-#!/usr/bin/python3
 import json
 import requests
 import streamlit as st
 
 st.set_page_config(page_title="Github Search", page_icon="assets/github-mark.png", layout="wide", initial_sidebar_state="auto")
 st.title("Github Search")
-st.text_input("Enter Github Username", key="username")
+username = st.text_input("Enter Github Username")
 
-if st.session_state.username is not None:
-    username = st.session_state.username
+@st.cache_data
+def get_github_info(username):
+    if username:
+        api = f"https://api.github.com/users/{username}/repos"
 
-    api = f"https://api.github.com/users/{username}/repos"
-    
-    search = requests.get(api)
-    results = json.loads(search.content)
+        try:
+            search = requests.get(api)
+            return search.json()
 
+        except requests.RequestException as exc:
+            st.error(f"Request error: {exc}")
+            return None
+
+results = get_github_info(username)
+
+if results:
     for result in results:
         name = result["name"]
         url = result["url"]
@@ -36,4 +43,3 @@ if st.session_state.username is not None:
             license_name = "None"
 
         st.text(f"{name} : {url}\nDespription : {description}\nLanguage : {language}\nCreated on : {created_at}\nLast update : {updated_at}\nForks : {forks_count}\nStars : {stargazers_count}\nWatchers : {watchers}\nLicence : {license_name}")
-        
