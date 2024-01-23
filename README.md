@@ -2,7 +2,7 @@
 
 Simple OSINT tool to gather basic intel on a Github user's repositories 
 
-The UI is built using streamlit: All hail streamlit 🙌🏾
+The UI is built using streamlit: All hail streamlit 🙌🏾 
 
 To run this locally simply
 ```
