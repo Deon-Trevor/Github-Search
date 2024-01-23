@@ -1,3 +1,1 @@
-Requests==2.31.0
-streamlit==1.25.0
-streamlit_chat==0.0.2.2
+streamlit

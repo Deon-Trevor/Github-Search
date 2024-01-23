@@ -42,4 +42,5 @@ if results:
         except TypeError:
             license_name = "None"
 
-        st.text(f"{name} : {url}\nDespription : {description}\nLanguage : {language}\nCreated on : {created_at}\nLast update : {updated_at}\nForks : {forks_count}\nStars : {stargazers_count}\nWatchers : {watchers}\nLicence : {license_name}")
+        with st.chat_message("Github", avatar="assets/github-mark.png"):
+            st.text(f"{name} : {url}\nDespription : {description}\nLanguage : {language}\nCreated on : {created_at}\nLast update : {updated_at}\nForks : {forks_count}\nStars : {stargazers_count}\nWatchers : {watchers}\nLicence : {license_name}")
