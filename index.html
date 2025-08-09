@@ -296,6 +296,155 @@
             border-color: rgba(124, 92, 255, .35);
             box-shadow: 0 12px 38px rgba(0, 0, 0, .35);
         }
+
+        /* Mini-header mode when stuck */
+        .profile {
+            transition: padding .18s ease, grid-template-columns .18s ease;
+        }
+
+        .sticky.is-stuck .profile {
+            grid-template-columns: 40px 1fr;
+            padding: 10px 12px;
+        }
+
+        .sticky.is-stuck .profile img {
+            width: 40px;
+            height: 40px;
+            transition: width .18s ease, height .18s ease;
+        }
+
+        .sticky.is-stuck .stats,
+        .sticky.is-stuck .profile p {
+            display: none;
+        }
+
+        .sticky.is-stuck h2 {
+            font-size: 1rem;
+            transition: font-size .18s ease;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .profile,
+            .sticky.is-stuck .profile img,
+            .sticky.is-stuck h2 {
+                transition: none
+            }
+        }
+
+        /* Repo action buttons */
+        .actionbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 6px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(124, 92, 255, .25);
+            background: #151821;
+            color: var(--text);
+            cursor: pointer;
+            font-size: .85rem
+        }
+
+        .btn-action[disabled] {
+            opacity: .6;
+            cursor: not-allowed
+        }
+
+        @media(prefers-color-scheme:light) {
+            .btn-action {
+                background: #eef1ff
+            }
+        }
+
+        .btn-action.on {
+            outline: 2px solid var(--ring);
+            box-shadow: inset 0 0 0 1px rgba(124, 92, 255, .4);
+        }
+
+        /* Inline banner */
+        .banner {
+            position: sticky;
+            top: 8px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 12px;
+            padding: 10px 12px;
+            border: 1px solid rgba(124, 92, 255, .25);
+            background: linear-gradient(180deg, rgba(124, 92, 255, .12), rgba(36, 210, 255, .08));
+            border-radius: 12px;
+            box-shadow: var(--shadow)
+        }
+
+        .banner.warn {
+            border-color: #f0b429;
+            background: linear-gradient(180deg, rgba(240, 180, 41, .18), rgba(240, 180, 41, .10));
+        }
+
+        .banner.error {
+            border-color: #ff6b6b;
+            background: linear-gradient(180deg, rgba(255, 107, 107, .20), rgba(255, 107, 107, .10));
+        }
+
+        .banner__content {
+            flex: 1
+        }
+
+        .banner__close {
+            background: transparent;
+            border: 1px solid rgba(124, 92, 255, .35);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 4px 8px;
+            cursor: pointer
+        }
+
+        /* Toast alert */
+        #customAlert {
+            position: fixed;
+            left: 50%;
+            top: 16px;
+            transform: translateX(-50%);
+            z-index: 100;
+            max-width: 640px;
+            width: calc(100% - 24px);
+            padding: 10px 12px;
+            border-left: 6px solid var(--accent);
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(124, 92, 255, .12), rgba(36, 210, 255, .08));
+            box-shadow: var(--shadow);
+            color: var(--text);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease, transform .2s ease
+        }
+
+        #customAlert.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, 0)
+        }
+
+        #customAlert.success {
+            border-color: #10b981
+        }
+
+        #customAlert.info {
+            border-color: var(--accent)
+        }
+
+        #customAlert.error {
+            border-color: #ef4444
+        }
+
+        #customAlert.warning {
+            border-color: #f59e0b
+        }
     </style>
 </head>
 
@@ -318,6 +467,12 @@
             <p class="muted" style="margin:0">Type a username. Get profile & repos. Sort, filter, export. <span
                     class="pill" title="Client‑side only; nothing is stored">No data stored</span></p>
         </header>
+
+        <!-- Toast alert (replaces inline banner) -->
+        <div id="customAlert" aria-live="assertive" role="status">
+            <strong class="sr-only">Notice</strong>
+            <span id="customAlertMessage">Message</span>
+        </div>
 
         <!-- Toolbar -->
         <section class="card toolbar" role="search" aria-label="Search GitHub">
@@ -345,6 +500,8 @@
             </div>
         </section>
 
+        <!-- Sticky sentinel to avoid jitter -->
+        <div id="sticky-sentinel" aria-hidden="true" style="height:1px"></div>
         <!-- Profile summary -->
         <section id="profile" class="card sticky" aria-live="polite" style="display:none"></section>
 
@@ -388,6 +545,7 @@
             exportCsv: qs('#export-csv'),
             rate: qs('#rate'),
             toolbar: qs('.toolbar'),
+
         };
 
         // Simple cache in localStorage by username
@@ -472,21 +630,41 @@
           ${r.description ? `<div class="muted">${r.description}</div>` : ''}
           <div class="meta">
             ${r.language ? `<span class="pill">${r.language}</span>` : ''}
-            <span>★ ${fmtNum(r.stargazers_count || 0)}</span>
-            <span>⑂ ${fmtNum(r.forks_count || 0)}</span>
+            <span>★ <span class="star-count">${fmtNum(r.stargazers_count || 0)}</span></span>
+            <span>⑂ <span class="fork-count">${fmtNum(r.forks_count || 0)}</span></span>
             <span>👁️ ${fmtNum(r.watchers || 0)}</span>
             <span>Updated ${new Date(r.updated_at).toLocaleDateString()}</span>
             ${r.license ? `<span class="pill" title="${r.license.spdx_id || ''}">${r.license.name}</span>` : ''}
+          </div>
+          <div class="actionbar">
+            <button class="btn-action" data-action="star" data-owner="${r.owner.login}" data-repo="${r.name}" aria-pressed="false">Star</button>
+            <button class="btn-action" data-action="watch" data-owner="${r.owner.login}" data-repo="${r.name}" aria-pressed="false">Watch</button>
+            <button class="btn-action" data-action="fork" data-owner="${r.owner.login}" data-repo="${r.name}">Fork</button>
           </div>
         </article>`).join('');
             el.count.textContent = state.filtered.length;
             el.page.textContent = state.page;
             el.repos.style.display = state.filtered.length ? 'block' : 'none';
             if (!state.filtered.length) el.grid.innerHTML = `<div class="empty">No repositories found for this query.</div>`;
+            // If a token is present, pre-hydrate action button state for visible repos
+            if (el.token.value.trim()) hydrateActionsForVisible();
         }
 
         function showError(msg) { el.error.textContent = msg; el.error.style.display = 'block'; }
         function clearError() { el.error.style.display = 'none'; el.error.textContent = ''; }
+
+        // Toast alert helper
+        function showAlert(message, type = 'info', duration = 4000) {
+            const alertEl = document.getElementById('customAlert');
+            const messageEl = document.getElementById('customAlertMessage');
+            if (!alertEl || !messageEl) return alert(message);
+            alertEl.classList.remove('success', 'info', 'error', 'warning', 'show');
+            alertEl.classList.add(type);
+            messageEl.textContent = message;
+            alertEl.classList.add('show');
+            clearTimeout(showAlert._t);
+            if (duration) showAlert._t = setTimeout(() => alertEl.classList.remove('show'), duration);
+        }
 
         async function search() {
             const u = el.username.value.trim();
@@ -520,6 +698,9 @@
         el.filter.addEventListener('input', () => { applyFilters(); });
         el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; renderRepos(); } });
         el.next.addEventListener('click', () => { if (state.page * state.pageSize < state.filtered.length) { state.page++; renderRepos(); } });
+        // Re-hydrate when token changes
+        el.token.addEventListener('change', () => { if (state.filtered.length) hydrateActionsForVisible(); });
+        el.token.addEventListener('blur', () => { if (state.filtered.length) hydrateActionsForVisible(); });
 
         // QoL: Enter to search
         el.username.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
@@ -528,13 +709,99 @@
         const params = new URLSearchParams(location.search);
         if (params.get('user')) { el.username.value = params.get('user'); search(); }
 
-        // Sticky visual state toggler: when toolbar scrolls out, profile gets 'is-stuck'
-        if (el.toolbar) {
+        // Sticky visual state toggler (sentinel-based to avoid jank)
+        const sentinel = document.getElementById('sticky-sentinel');
+        if (sentinel) {
             const io = new IntersectionObserver(([entry]) => {
-                el.profile.classList.toggle('is-stuck', !entry.isIntersecting);
-            });
-            io.observe(el.toolbar);
+                // When sentinel is NOT visible (scrolled past top + offset), set stuck
+                const stuck = entry.intersectionRatio === 0;
+                el.profile.classList.toggle('is-stuck', stuck);
+            }, { rootMargin: '-12px 0px 0px 0px', threshold: [0, 1] });
+            io.observe(sentinel);
+        }        // ---- Action state hydration (pre-detect starred/watched) ----
+        async function isStarred(owner, repo) {
+            const t = el.token.value.trim(); if (!t) return false;
+            const r = await fetch(`https://api.github.com/user/starred/${owner}/${repo}`, { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + t } });
+            return r.status === 204; // 204 if starred, 404 if not
         }
+        async function isWatched(owner, repo) {
+            const t = el.token.value.trim(); if (!t) return false;
+            const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/subscription`, { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + t } });
+            if (r.status === 404) return false;
+            if (!r.ok) return false;
+            const data = await r.json().catch(() => null);
+            return !!(data && (data.subscribed || data.ignored === false));
+        }
+        function setBtnState(btn, on, labels) {
+            btn.dataset.on = String(on);
+            btn.textContent = on ? labels.on : labels.off;
+            btn.classList.toggle('on', on);
+            btn.setAttribute('aria-pressed', String(on));
+        }
+        async function hydrateActionsForVisible() {
+            const buttons = qsa('.actionbar .btn-action');
+            const stars = buttons.filter(b => b.dataset.action === 'star');
+            const watches = buttons.filter(b => b.dataset.action === 'watch');
+            await Promise.allSettled(stars.map(async b => {
+                try { const on = await isStarred(b.dataset.owner, b.dataset.repo); setBtnState(b, on, { on: 'Unstar', off: 'Star' }); } catch { }
+            }));
+            await Promise.allSettled(watches.map(async b => {
+                try { const on = await isWatched(b.dataset.owner, b.dataset.repo); setBtnState(b, on, { on: 'Unwatch', off: 'Watch' }); } catch { }
+            }));
+        }
+
+        // --- Repo quick actions (require a token with appropriate scopes) ---
+        async function apiStar(owner, repo, on) {
+            const url = `https://api.github.com/user/starred/${owner}/${repo}`;
+            const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + el.token.value.trim() };
+            const r = await fetch(url, { method: on ? 'PUT' : 'DELETE', headers });
+            if (!r.ok && r.status !== 304) throw new Error('Star failed');
+        }
+        async function apiWatch(owner, repo, sub) {
+            const url = `https://api.github.com/repos/${owner}/${repo}/subscription`;
+            const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + el.token.value.trim() };
+            const r = await fetch(url, { method: sub ? 'PUT' : 'DELETE', headers, body: sub ? JSON.stringify({ subscribed: true }) : undefined });
+            if (!r.ok && r.status !== 304) throw new Error('Watch failed');
+        }
+        async function apiFork(owner, repo) {
+            const url = `https://api.github.com/repos/${owner}/${repo}/forks`;
+            const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + el.token.value.trim() };
+            const r = await fetch(url, { method: 'POST', headers });
+            if (!r.ok) throw new Error('Fork failed');
+        }
+        function findAndBump(owner, name, field, delta) {
+            const hit = state.repos.find(x => x.owner.login === owner && x.name === name);
+            if (hit) { hit[field] = (hit[field] || 0) + delta; }
+        }
+        el.grid.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            if (!el.token.value.trim()) { showAlert('A GitHub token is required for actions. For public repos, use a token with the “public_repo” scope; for private, use “repo”.', 'warning', 3000); return; }
+            const { action, owner, repo } = btn.dataset;
+            btn.disabled = true;
+            const card = btn.closest('article');
+            try {
+                if (action === 'star') {
+                    const on = btn.dataset.on !== 'true';
+                    await apiStar(owner, repo, on);
+                    setBtnState(btn, on, { on: 'Unstar', off: 'Star' });
+                    const starEl = card.querySelector('.star-count');
+                    if (starEl) { const cur = parseInt(starEl.textContent.replaceAll(',', '')) || 0; const next = on ? cur + 1 : Math.max(0, cur - 1); starEl.textContent = fmtNum(next); }
+                    findAndBump(owner, repo, 'stargazers_count', on ? 1 : -1);
+                } else if (action === 'watch') {
+                    const sub = btn.dataset.on !== 'true';
+                    await apiWatch(owner, repo, sub);
+                    setBtnState(btn, sub, { on: 'Unwatch', off: 'Watch' });
+                } else if (action === 'fork') {
+                    await apiFork(owner, repo);
+                    btn.textContent = 'Forked ✓';
+                    const forkEl = card.querySelector('.fork-count');
+                    if (forkEl) { const cur = parseInt(forkEl.textContent.replaceAll(',', '')) || 0; forkEl.textContent = fmtNum(cur + 1); }
+                    findAndBump(owner, repo, 'forks_count', 1);
+                }
+            } catch (err) { showAlert(err.message || 'Action failed', 'error'); }
+            finally { btn.disabled = false; }
+        });
     </script>
 </body>
 
