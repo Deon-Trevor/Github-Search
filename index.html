@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GitHub Explorer • Sync_Pundit</title>
+    <meta name="description"
+        content="Fast, no‑framework GitHub profile & repo explorer. Search, sort, filter, export." />
+    <meta name="keywords" content="OSINT, GitHub, Sync_Pundit,👽😎🔱🔥, Deon Trevor Mpofu, syncpundit, curious n00b">
+    <meta name="author" content="Sync_Pundit 👽😎🔱🔥">
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.26.79-.58v-2.03c-3.22.7-3.9-1.35-3.9-1.35-.53-1.37-1.3-1.74-1.3-1.74-1.06-.73.08-.72.08-.72 1.17.08 1.78 1.21 1.78 1.21 1.04 1.8 2.72 1.28 3.39.98.11-.77.41-1.28.74-1.57-2.57-.29-5.28-1.29-5.28-5.74 0-1.27.45-2.3 1.2-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.32 3.22 1.19a11.2 11.2 0 0 1 5.86 0c2.24-1.51 3.22-1.19 3.22-1.19.63 1.6.23 2.78.11 3.07.75.81 1.2 1.84 1.2 3.11 0 4.46-2.71 5.44-5.3 5.73.42.36.79 1.08.79 2.19v3.25c0 .32.21.69.8.57A11.5 11.5 0 0 0 12 .5Z' fill='%23000'/%3E%3C/svg%3E" />
+    <style>
+        :root {
+            --bg: #0b0c10;
+            --card: #13151a;
+            --muted: #9aa0aa;
+            --text: #f6f7fb;
+            --brand: #7c5cff;
+            --accent: #24d2ff;
+            --ring: rgba(124, 92, 255, .35);
+            --radius: 14px;
+            --shadow: 0 10px 30px rgba(0, 0, 0, .25);
+            --maxw: 1100px
+        }
+
+        @media(prefers-color-scheme:light) {
+            :root {
+                --bg: #f7f9ff;
+                --card: #ffffff;
+                --text: #0c0e12;
+                --muted: #606776;
+                --shadow: 0 8px 24px rgba(18, 18, 22, .08)
+            }
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 500 15px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, Apple Color Emoji, Segoe UI Emoji
+        }
+
+        .wrap {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 24px;
+            position: relative
+        }
+
+        .wrap:before {
+            content: "";
+            position: fixed;
+            inset: -10% -10% auto -10%;
+            height: 60vh;
+            background: radial-gradient(ellipse at 10% -10%, rgba(124, 92, 255, .18), transparent 55%), radial-gradient(ellipse at 110% -20%, rgba(36, 210, 255, .12), transparent 55%);
+            pointer-events: none;
+            z-index: -1
+        }
+
+        .wrap:after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(0deg, transparent 0%, rgba(124, 92, 255, .06) 100%), url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"64\" height=\"64\" viewBox=\"0 0 32 32\"><path d=\"M 32 0 L 0 0 0 32\" fill=\"none\" stroke=\"rgba(124,92,255,.08)\"/></svg>') repeat;
+            mask-image: radial-gradient(80% 60% at 50% -10%, #000 0%, transparent 70%);
+            opacity: .6;
+            pointer-events: none;
+            z-index: -1
+        }
+
+        header {
+            display: grid;
+            gap: 14px;
+            margin-bottom: 16px
+        }
+
+        .title {
+            font-size: clamp(1.4rem, 2.5vw, 2rem);
+            font-weight: 800;
+            letter-spacing: .2px
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(124, 92, 255, .12)
+        }
+
+        .toolbar {
+            display: grid;
+            gap: 10px;
+            padding: 16px 14px 12px;
+            position: relative
+        }
+
+        .toolbar .badge {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            font-size: .8rem;
+            color: var(--muted)
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px
+        }
+
+        @media(min-width:800px) {
+            .row {
+                grid-template-columns: 2fr 1fr 1fr
+            }
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            background: #0f1116;
+            color: var(--text)
+        }
+
+        @media(prefers-color-scheme:light) {
+
+            input,
+            select,
+            button {
+                background: #f3f5fb;
+                color: var(--text)
+            }
+        }
+
+        input:focus,
+        select:focus,
+        button:focus {
+            outline: 2px solid var(--ring);
+            outline-offset: 2px
+        }
+
+        button.primary {
+            background: linear-gradient(90deg, var(--brand), var(--accent));
+            border: none;
+            font-weight: 700
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px;
+            padding: 14px
+        }
+
+        @media(min-width:860px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+
+        .profile {
+            display: grid;
+            grid-template-columns: 72px 1fr;
+            gap: 14px;
+            align-items: center;
+            padding: 14px
+        }
+
+        .profile img {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, .15);
+            object-fit: cover
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: .92rem
+        }
+
+        .repo {
+            display: grid;
+            gap: 8px;
+            padding: 14px;
+            border: 1px solid rgba(124, 92, 255, .12);
+            border-radius: 12px;
+            background: #0f1116
+        }
+
+        @media(prefers-color-scheme:light) {
+            .repo {
+                background: #fafbff
+            }
+        }
+
+        .repo h3 {
+            margin: 0;
+            font-size: 1rem
+        }
+
+        .repo a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        .repo a:hover {
+            text-decoration: underline
+        }
+
+        .meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: .9rem;
+            color: var(--muted)
+        }
+
+        .pill {
+            padding: .15rem .5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(124, 92, 255, .25)
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-top: 1px dashed rgba(124, 92, 255, .2)
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0
+        }
+
+        .error {
+            padding: 12px 14px;
+            color: #ff6b6b
+        }
+
+        .empty {
+            padding: 14px;
+            color: var(--muted)
+        }
+
+        .kbd {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background: rgba(124, 92, 255, .12);
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(124, 92, 255, .25)
+        }
+    </style>
+</head>
+
+<body>
+    <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+        <defs>
+            <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                <path d="M 32 0 L 0 0 0 32" fill="none" stroke="rgba(124,92,255,.15)" stroke-width="1" />
+            </pattern>
+            <radialGradient id="glow" cx="50%" cy="-10%" r="80%">
+                <stop offset="0%" stop-color="#7c5cff" stop-opacity="0.35" />
+                <stop offset="60%" stop-color="#24d2ff" stop-opacity="0.15" />
+                <stop offset="100%" stop-color="transparent" stop-opacity="0" />
+            </radialGradient>
+        </defs>
+    </svg>
+    <div class="wrap">
+        <header>
+            <div class="title">GitHub Explorer <span class="muted">by Sync_Pundit</span></div>
+            <p class="muted" style="margin:0">Type a username. Get profile & repos. Sort, filter, export. <span
+                    class="pill" title="Client‑side only; nothing is stored">No data stored</span></p>
+        </header>
+
+        <!-- Toolbar -->
+        <section class="card toolbar" role="search" aria-label="Search GitHub">
+            <div class="badge">API remaining: <span id="rate">–</span></div>
+            <div class="row">
+                <label class="sr-only" for="username">GitHub username</label>
+                <input id="username" placeholder="e.g. torvalds, vercel, sync-pundit" autocomplete="off" />
+                <select id="sort">
+                    <option value="updated">Sort: Updated (desc)</option>
+                    <option value="stars">Sort: Stars (desc)</option>
+                    <option value="name">Sort: Name (A→Z)</option>
+                </select>
+                <input id="filter" placeholder="Filter by name or description" autocomplete="off" />
+            </div>
+            <div class="controls">
+                <button class="primary" id="go">Scan Now</button>
+                <button id="clear">Clear</button>
+                <button id="export-json" title="Export repos as JSON">Export JSON</button>
+                <button id="export-csv" title="Export repos as CSV">Export CSV</button>
+                <label title="Optional: use a token to avoid rate limits"
+                    style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                    <span class="muted">Token</span>
+                    <input id="token" type="password" placeholder="ghp_… (optional)" style="max-width:320px" />
+                </label>
+            </div>
+        </section>
+
+        <!-- Profile summary -->
+        <section id="profile" class="card" aria-live="polite" style="display:none"></section>
+
+        <!-- Repo grid -->
+        <section id="repos" class="card" style="margin-top:12px;display:none">
+            <div id="repo-grid" class="grid"></div>
+            <div class="footer">
+                <div class="muted"><span id="count">0</span> repos</div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button id="prev">Prev</button>
+                    <span class="muted">Page <span id="page">1</span></span>
+                    <button id="next">Next</button>
+                </div>
+            </div>
+        </section>
+
+        <div id="error" class="error" role="alert" style="display:none"></div>
+    </div>
+
+    <script>
+        const qs = (s, el = document) => el.querySelector(s);
+        const qsa = (s, el = document) => [...el.querySelectorAll(s)];
+        const state = { user: null, repos: [], page: 1, pageSize: 20, filtered: [] };
+
+        const el = {
+            username: qs('#username'),
+            sort: qs('#sort'),
+            filter: qs('#filter'),
+            go: qs('#go'),
+            clear: qs('#clear'),
+            token: qs('#token'),
+            profile: qs('#profile'),
+            repos: qs('#repos'),
+            grid: qs('#repo-grid'),
+            error: qs('#error'),
+            count: qs('#count'),
+            page: qs('#page'),
+            prev: qs('#prev'),
+            next: qs('#next'),
+            exportJson: qs('#export-json'),
+            exportCsv: qs('#export-csv'),
+            rate: qs('#rate'),
+        };
+
+        // Simple cache in localStorage by username
+        const cache = {
+            get: (key) => { try { return JSON.parse(localStorage.getItem('gh:' + key)); } catch { return null } },
+            set: (key, val) => localStorage.setItem('gh:' + key, JSON.stringify({ t: Date.now(), ...val })),
+        };
+
+        function fmtNum(n) { return Intl.NumberFormat().format(n); }
+        function fmtDate(s) { return new Date(s).toLocaleString(); }
+
+        async function fetchJson(url, token) {
+            const headers = { 'Accept': 'application/vnd.github+json' };
+            if (token) headers['Authorization'] = 'Bearer ' + token.trim();
+            const r = await fetch(url, { headers });
+            const remain = r.headers.get('x-ratelimit-remaining');
+            const limit = r.headers.get('x-ratelimit-limit');
+            const reset = r.headers.get('x-ratelimit-reset');
+            if (el.rate) el.rate.textContent = remain ? `${remain}/${limit}` : '–';
+            if (!r.ok) {
+                const body = await r.json().catch(() => ({ message: r.statusText }));
+                const when = reset ? new Date(Number(reset) * 1000).toLocaleTimeString() : '';
+                throw new Error(`${r.status} ${body.message || r.statusText} • remaining ${remain}/${limit}${when ? ` • resets ${when}` : ''}`);
+            }
+            return r.json();
+        }
+
+        async function loadUser(username, token) {
+            const url = `https://api.github.com/users/${encodeURIComponent(username)}`;
+            return fetchJson(url, token);
+        }
+
+        async function loadRepos(username, token) {
+            // Pull up to 300 repos (3 pages) sorted by updated
+            let all = [];
+            for (let page = 1; page <= 3; page++) {
+                const url = `https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&sort=updated`;
+                const chunk = await fetchJson(url, token);
+                all = all.concat(chunk);
+                if (chunk.length < 100) break;
+            }
+            return all;
+        }
+
+        function renderProfile(u) {
+            el.profile.style.display = 'block';
+            el.profile.innerHTML = `
+        <div class="profile">
+          <img src="${u.avatar_url}" alt="${u.login} avatar" />
+          <div>
+            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+              <h2 style="margin:0">${u.name || u.login}</h2>
+              <span class="muted">@${u.login}</span>
+            </div>
+            <div class="stats">
+              <span>Followers <span class="pill">${fmtNum(u.followers)}</span></span>
+              <span>Following <span class="pill">${fmtNum(u.following)}</span></span>
+              <span>Public Repos <span class="pill">${fmtNum(u.public_repos)}</span></span>
+            </div>
+            ${u.bio ? `<p class="muted" style="margin:.25rem 0 0">${u.bio}</p>` : ''}
+          </div>
+        </div>`;
+        }
+
+        function applyFilters() {
+            const q = el.filter.value.trim().toLowerCase();
+            const sorted = [...state.repos];
+            const sort = el.sort.value;
+            if (sort === 'updated') sorted.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+            if (sort === 'stars') sorted.sort((a, b) => (b.stargazers_count || 0) - (a.stargazers_count || 0));
+            if (sort === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name));
+            state.filtered = q ? sorted.filter(r => (r.name + " " + (r.description || '')).toLowerCase().includes(q)) : sorted;
+            state.page = 1;
+            renderRepos();
+        }
+
+        function renderRepos() {
+            const start = (state.page - 1) * state.pageSize;
+            const slice = state.filtered.slice(start, start + state.pageSize);
+            el.grid.innerHTML = slice.map(r => `<article class="repo">
+          <h3><a href="${r.html_url}" target="_blank" rel="noopener">${r.name}</a></h3>
+          ${r.description ? `<div class="muted">${r.description}</div>` : ''}
+          <div class="meta">
+            ${r.language ? `<span class="pill">${r.language}</span>` : ''}
+            <span>★ ${fmtNum(r.stargazers_count || 0)}</span>
+            <span>⑂ ${fmtNum(r.forks_count || 0)}</span>
+            <span>👁️ ${fmtNum(r.watchers || 0)}</span>
+            <span>Updated ${new Date(r.updated_at).toLocaleDateString()}</span>
+            ${r.license ? `<span class="pill" title="${r.license.spdx_id || ''}">${r.license.name}</span>` : ''}
+          </div>
+        </article>`).join('');
+            el.count.textContent = state.filtered.length;
+            el.page.textContent = state.page;
+            el.repos.style.display = state.filtered.length ? 'block' : 'none';
+            if (!state.filtered.length) el.grid.innerHTML = `<div class="empty">No repositories found for this query.</div>`;
+        }
+
+        function showError(msg) { el.error.textContent = msg; el.error.style.display = 'block'; }
+        function clearError() { el.error.style.display = 'none'; el.error.textContent = ''; }
+
+        async function search() {
+            const u = el.username.value.trim();
+            if (!u) return;
+            clearError();
+            el.grid.innerHTML = '<div class="muted" style="padding:14px">Loading…</div>';
+            el.repos.style.display = 'block';
+            const token = el.token.value;
+
+            const cached = cache.get(u);
+            if (cached && Date.now() - cached.t < 1000 * 60 * 5) {
+                state.user = cached.user; state.repos = cached.repos; applyFilters(); renderProfile(state.user); return;
+            }
+
+            try {
+                const [user, repos] = await Promise.all([loadUser(u, token), loadRepos(u, token)]);
+                state.user = user; state.repos = repos; cache.set(u, { user, repos });
+                renderProfile(user); applyFilters();
+            } catch (err) { showError(err.message); el.repos.style.display = 'none'; el.profile.style.display = 'none'; }
+        }
+
+        // Export helpers
+        function download(filename, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 500); }
+        el.exportJson.addEventListener('click', () => { if (!state.repos.length) return; download(`${state.user.login}-repos.json`, JSON.stringify(state.filtered, null, 2)); });
+        el.exportCsv.addEventListener('click', () => { if (!state.repos.length) return; const cols = ['name', 'html_url', 'description', 'language', 'stargazers_count', 'forks_count', 'watchers', 'updated_at']; const rows = state.filtered.map(r => cols.map(c => `"${String(r[c] ?? '').replaceAll('"', '""')}"`).join(',')); download(`${state.user.login}-repos.csv`, [cols.join(','), ...rows].join('\n')); });
+
+        // Events
+        el.go.addEventListener('click', search);
+        el.clear.addEventListener('click', () => { el.username.value = ''; el.filter.value = ''; state.repos = []; state.filtered = []; el.profile.style.display = 'none'; el.repos.style.display = 'none'; clearError(); });
+        el.sort.addEventListener('change', applyFilters);
+        el.filter.addEventListener('input', () => { applyFilters(); });
+        el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; renderRepos(); } });
+        el.next.addEventListener('click', () => { if (state.page * state.pageSize < state.filtered.length) { state.page++; renderRepos(); } });
+
+        // QoL: Enter to search
+        el.username.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
+
+        // Hydrate from ?user= query
+        const params = new URLSearchParams(location.search);
+        if (params.get('user')) { el.username.value = params.get('user'); search(); }
+    </script>
+</body>
+
+</html>
