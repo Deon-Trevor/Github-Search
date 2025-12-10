@@ -11,958 +11,192 @@
     <meta name="author" content="Sync_Pundit 👽😎🔱🔥">
     <link rel="icon"
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.26.79-.58v-2.03c-3.22.7-3.9-1.35-3.9-1.35-.53-1.37-1.3-1.74-1.3-1.74-1.06-.73.08-.72.08-.72 1.17.08 1.78 1.21 1.78 1.21 1.04 1.8 2.72 1.28 3.39.98.11-.77.41-1.28.74-1.57-2.57-.29-5.28-1.29-5.28-5.74 0-1.27.45-2.3 1.2-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.32 3.22 1.19a11.2 11.2 0 0 1 5.86 0c2.24-1.51 3.22-1.19 3.22-1.19.63 1.6.23 2.78.11 3.07.75.81 1.2 1.84 1.2 3.11 0 4.46-2.71 5.44-5.3 5.73.42.36.79 1.08.79 2.19v3.25c0 .32.21.69.8.57A11.5 11.5 0 0 0 12 .5Z' fill='%23000'/%3E%3C/svg%3E" />
-    <style>
-        :root {
-            --bg: #0b0c10;
-            --card: #13151a;
-            --muted: #9aa0aa;
-            --text: #f6f7fb;
-            --brand: #7c5cff;
-            --accent: #24d2ff;
-            --ring: rgba(124, 92, 255, .35);
-            --radius: 14px;
-            --shadow: 0 10px 30px rgba(0, 0, 0, .25);
-            --maxw: 1100px
-        }
-
-        @media(prefers-color-scheme:light) {
-            :root {
-                --bg: #f7f9ff;
-                --card: #ffffff;
-                --text: #0c0e12;
-                --muted: #606776;
-                --shadow: 0 8px 24px rgba(18, 18, 22, .08)
-            }
-        }
-
-        * {
-            box-sizing: border-box
-        }
-
-        html,
-        body {
-            height: 100%
-        }
-
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-            font: 500 15px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, Apple Color Emoji, Segoe UI Emoji
-        }
-
-        .wrap {
-            max-width: var(--maxw);
-            margin: 0 auto;
-            padding: 24px;
-            position: relative
-        }
-
-        .wrap:before {
-            content: "";
-            position: fixed;
-            inset: -10% -10% auto -10%;
-            height: 60vh;
-            background: radial-gradient(ellipse at 10% -10%, rgba(124, 92, 255, .18), transparent 55%), radial-gradient(ellipse at 110% -20%, rgba(36, 210, 255, .12), transparent 55%);
-            pointer-events: none;
-            z-index: -1
-        }
-
-        .wrap:after {
-            content: "";
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(0deg, transparent 0%, rgba(124, 92, 255, .06) 100%), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32"><path d="M 32 0 L 0 0 0 32" fill="none" stroke="rgba(124,92,255,.08)"/></svg>') repeat;
-            mask-image: radial-gradient(80% 60% at 50% -10%, #000 0%, transparent 70%);
-            opacity: .6;
-            pointer-events: none;
-            z-index: -1
-        }
-
-        header {
-            display: grid;
-            gap: 10px;
-            margin-bottom: 16px
-        }
-
-        .subhead {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap
-        }
-
-        /* API badge (rate limit) */
-        #apiCounter {
-            font-size: .85rem;
-            white-space: nowrap
-        }
-
-        #apiCounter.ok {
-            border-color: rgba(36, 210, 255, .35);
-            background: linear-gradient(180deg, rgba(36, 210, 255, .18), rgba(36, 210, 255, .10));
-        }
-
-        #apiCounter.warn {
-            border-color: #f0b429;
-            background: linear-gradient(180deg, rgba(240, 180, 41, .18), rgba(240, 180, 41, .10));
-        }
-
-        #apiCounter.crit {
-            border-color: #ff6b6b;
-            background: linear-gradient(180deg, rgba(255, 107, 107, .20), rgba(255, 107, 107, .10));
-        }
-
-        .title {
-            font-size: clamp(1.4rem, 2.5vw, 2rem);
-            font-weight: 800;
-            letter-spacing: .2px
-        }
-
-        .card {
-            background: var(--card);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(124, 92, 255, .12)
-        }
-
-        .toolbar {
-            display: grid;
-            gap: 10px;
-            padding: 16px 14px 12px;
-            position: relative
-        }
-
-        .toolbar .badge {
-            position: absolute;
-            right: 14px;
-            top: 14px;
-            font-size: .8rem;
-            color: var(--muted)
-        }
-
-        .row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px
-        }
-
-        @media(min-width:800px) {
-            .row {
-                grid-template-columns: 2fr 1fr 1fr
-            }
-        }
-
-        input,
-        select,
-        button {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid transparent;
-            background: #0f1116;
-            color: var(--text)
-        }
-
-        @media(prefers-color-scheme:light) {
-
-            input,
-            select,
-            button {
-                background: #f3f5fb;
-                color: var(--text)
-            }
-        }
-
-        input:focus,
-        select:focus,
-        button:focus {
-            outline: 2px solid var(--ring);
-            outline-offset: 2px
-        }
-
-        button.primary {
-            background: linear-gradient(90deg, var(--brand), var(--accent));
-            border: none;
-            font-weight: 700
-        }
-
-        .grid {
-            display: grid;
-            gap: 12px;
-            padding: 14px
-        }
-
-        @media(min-width:860px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr)
-            }
-        }
-
-        .profile {
-            display: grid;
-            grid-template-columns: 72px 1fr;
-            gap: 14px;
-            align-items: center;
-            padding: 14px
-        }
-
-        .profile img {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, .15);
-            object-fit: cover
-        }
-
-        .muted {
-            color: var(--muted)
-        }
-
-        .stats {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            font-size: .92rem
-        }
-
-        .repo {
-            display: grid;
-            gap: 8px;
-            padding: 14px;
-            border: 1px solid rgba(124, 92, 255, .12);
-            border-radius: 12px;
-            background: #0f1116
-        }
-
-        @media(prefers-color-scheme:light) {
-            .repo {
-                background: #fafbff
-            }
-        }
-
-        .repo h3 {
-            margin: 0;
-            font-size: 1rem
-        }
-
-        .repo a {
-            color: inherit;
-            text-decoration: none
-        }
-
-        .repo a:hover {
-            text-decoration: underline
-        }
-
-        .meta {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            font-size: .9rem;
-            color: var(--muted)
-        }
-
-        .pill {
-            padding: .15rem .5rem;
-            border-radius: 999px;
-            border: 1px solid rgba(124, 92, 255, .25)
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap
-        }
-
-        .footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 14px;
-            border-top: 1px dashed rgba(124, 92, 255, .2)
-        }
-
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0
-        }
-
-        .error {
-            padding: 12px 14px;
-            color: #ff6b6b
-        }
-
-        .empty {
-            padding: 14px;
-            color: var(--muted)
-        }
-
-        .kbd {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            background: rgba(124, 92, 255, .12);
-            padding: 2px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(124, 92, 255, .25)
-        }
-
-        /* Sticky profile helpers */
-        .sticky {
-            position: sticky;
-            top: 12px;
-            z-index: 3;
-        }
-
-        .sticky.is-stuck {
-            border-color: rgba(124, 92, 255, .35);
-            box-shadow: 0 12px 38px rgba(0, 0, 0, .35);
-        }
-
-        /* Mini-header mode when stuck */
-        .profile {
-            transition: padding .18s ease, grid-template-columns .18s ease;
-        }
-
-        .sticky.is-stuck .profile {
-            grid-template-columns: 40px 1fr;
-            padding: 10px 12px;
-        }
-
-        .sticky.is-stuck .profile img {
-            width: 40px;
-            height: 40px;
-            transition: width .18s ease, height .18s ease;
-        }
-
-        .sticky.is-stuck .stats,
-        .sticky.is-stuck .profile p {
-            display: none;
-        }
-
-        .sticky.is-stuck h2 {
-            font-size: 1rem;
-            transition: font-size .18s ease;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-
-            .profile,
-            .sticky.is-stuck .profile img,
-            .sticky.is-stuck h2 {
-                transition: none
-            }
-        }
-
-        /* Repo action buttons */
-        .actionbar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn-action {
-            padding: 6px 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(124, 92, 255, .25);
-            background: #151821;
-            color: var(--text);
-            cursor: pointer;
-            font-size: .85rem
-        }
-
-        .btn-action[disabled] {
-            opacity: .6;
-            cursor: not-allowed
-        }
-
-        @media(prefers-color-scheme:light) {
-            .btn-action {
-                background: #eef1ff
-            }
-        }
-
-        .btn-action.on {
-            outline: 2px solid var(--ring);
-            box-shadow: inset 0 0 0 1px rgba(124, 92, 255, .4);
-        }
-
-        /* Inline banner */
-        .banner {
-            position: sticky;
-            top: 8px;
-            z-index: 50;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 0 0 12px;
-            padding: 10px 12px;
-            border: 1px solid rgba(124, 92, 255, .25);
-            background: linear-gradient(180deg, rgba(124, 92, 255, .12), rgba(36, 210, 255, .08));
-            border-radius: 12px;
-            box-shadow: var(--shadow)
-        }
-
-        .banner.warn {
-            border-color: #f0b429;
-            background: linear-gradient(180deg, rgba(240, 180, 41, .18), rgba(240, 180, 41, .10));
-        }
-
-        .banner.error {
-            border-color: #ff6b6b;
-            background: linear-gradient(180deg, rgba(255, 107, 107, .20), rgba(255, 107, 107, .10));
-        }
-
-        .banner__content {
-            flex: 1
-        }
-
-        .banner__close {
-            background: transparent;
-            border: 1px solid rgba(124, 92, 255, .35);
-            color: var(--text);
-            border-radius: 8px;
-            padding: 4px 8px;
-            cursor: pointer
-        }
-
-        /* Toast alert */
-        #customAlert {
-            position: fixed;
-            left: 50%;
-            top: 16px;
-            transform: translateX(-50%);
-            z-index: 100;
-            max-width: 640px;
-            width: calc(100% - 24px);
-            padding: 10px 12px;
-            border-left: 6px solid var(--accent);
-            border-radius: 12px;
-            background: linear-gradient(180deg, rgba(124, 92, 255, .12), rgba(36, 210, 255, .08));
-            box-shadow: var(--shadow);
-            color: var(--text);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .2s ease, transform .2s ease
-        }
-
-        #customAlert.show {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translate(-50%, 0)
-        }
-
-        #customAlert.success {
-            border-color: #10b981
-        }
-
-        #customAlert.info {
-            border-color: var(--accent)
-        }
-
-        #customAlert.error {
-            border-color: #ef4444
-        }
-
-        #customAlert.warning {
-            border-color: #f59e0b
-        }
-
-        .toasts {
-            position: fixed;
-            right: 14px;
-            top: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 200
-        }
-
-        .toast {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            max-width: 520px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(124, 92, 255, .25);
-            background: linear-gradient(180deg, rgba(124, 92, 255, .12), rgba(36, 210, 255, .08));
-            color: var(--text);
-            box-shadow: var(--shadow);
-            transform: translateY(-8px);
-            opacity: 0;
-            backdrop-filter: saturate(120%) blur(6px)
-        }
-
-        .toast.show {
-            animation: toast-in .18s ease forwards
-        }
-
-        .toast.hide {
-            animation: toast-out .18s ease forwards
-        }
-
-        .toast.success {
-            border-left: 6px solid #10b981;
-            border-color: rgba(16, 185, 129, .35);
-            background: linear-gradient(180deg, rgba(16, 185, 129, .18), rgba(16, 185, 129, .10))
-        }
-
-        .toast.info {
-            border-left: 6px solid var(--accent);
-            border-color: rgba(36, 210, 255, .35);
-            background: linear-gradient(180deg, rgba(36, 210, 255, .18), rgba(36, 210, 255, .10))
-        }
-
-        .toast.error {
-            border-left: 6px solid #ef4444;
-            border-color: rgba(239, 68, 68, .35);
-            background: linear-gradient(180deg, rgba(239, 68, 68, .20), rgba(239, 68, 68, .10))
-        }
-
-        .toast.warning {
-            border-left: 6px solid #f59e0b;
-            border-color: rgba(245, 158, 11, .35);
-            background: linear-gradient(180deg, rgba(245, 158, 11, .18), rgba(245, 158, 11, .10))
-        }
-
-        .toast .icon {
-            width: 18px;
-            height: 18px;
-            margin-top: 2px;
-            flex: 0 0 18px;
-            opacity: .9
-        }
-
-        .toast .body {
-            flex: 1;
-            line-height: 1.35;
-            min-width: 0;
-            white-space: normal;
-            word-break: normal
-        }
-
-        .toast .close {
-            margin-left: auto;
-            align-self: center;
-            background: transparent;
-            border: 1px solid rgba(124, 92, 255, .35);
-            color: var(--text);
-            border-radius: 8px;
-            padding: 2px 8px;
-            cursor: pointer;
-            width: auto;
-            flex: 0 0 auto
-        }
-
-        @keyframes toast-in {
-            to {
-                transform: translateY(0);
-                opacity: 1
-            }
-        }
-
-        @keyframes toast-out {
-            to {
-                transform: translateY(-8px);
-                opacity: 0
-            }
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind (CDN version for development; swap with compiled CSS for production) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Tailwind extensions + embed mode + animations -->
+    <link rel="stylesheet" href="assets/styles.css" />
 </head>
 
-<body>
-    <svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
-        <defs>
-            <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-                <path d="M 32 0 L 0 0 0 32" fill="none" stroke="rgba(124,92,255,.15)" stroke-width="1" />
-            </pattern>
-            <radialGradient id="glow" cx="50%" cy="-10%" r="80%">
-                <stop offset="0%" stop-color="#7c5cff" stop-opacity="0.35" />
-                <stop offset="60%" stop-color="#24d2ff" stop-opacity="0.15" />
-                <stop offset="100%" stop-color="transparent" stop-opacity="0" />
-            </radialGradient>
-        </defs>
-    </svg>
-    <div class="wrap">
-        <header>
-            <div class="title">GitHub Explorer <span class="muted">by Sync_Pundit</span></div>
-            <div class="subhead">
-                <p class="muted" style="margin:0">Type a username. Get profile & repos. Sort, filter, export. <span
-                        class="pill" title="Client‑side only; nothing is stored">No data stored</span></p>
-                <span id="apiCounter" class="pill ok">API remaining: <span id="rate">–</span></span>
-            </div>
-        </header>
+<body class="app-bg min-h-screen text-slate-100">
+    <div class="min-h-screen bg-overlay">
+        <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
 
-        <!-- Toast stack -->
-        <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
-
-        <!-- Toast alert (replaces inline banner) -->
-        <div id="customAlert" aria-live="assertive" role="status">
-            <strong class="sr-only">Notice</strong>
-            <span id="customAlertMessage">Message</span>
-        </div>
-
-        <!-- Toolbar -->
-        <section class="card toolbar" role="search" aria-label="Search GitHub">
-            <div class="row">
-                <label class="sr-only" for="username">GitHub username</label>
-                <input id="username" placeholder="e.g. torvalds, vercel, sync-pundit" autocomplete="off" />
-                <select id="sort">
-                    <option value="updated">Sort: Updated (desc)</option>
-                    <option value="stars">Sort: Stars (desc)</option>
-                    <option value="name">Sort: Name (A→Z)</option>
-                </select>
-                <input id="filter" placeholder="Filter by name or description" autocomplete="off" />
-            </div>
-            <div class="controls">
-                <button class="primary" id="go">Scan Now</button>
-                <button id="clear">Clear</button>
-                <button id="export-json" title="Export repos as JSON">Export JSON</button>
-                <button id="export-csv" title="Export repos as CSV">Export CSV</button>
-                <label title="Optional: use a token to avoid rate limits"
-                    style="margin-left:auto;display:flex;gap:8px;align-items:center">
-                    <span class="muted">Token</span>
-                    <input id="token" type="password" placeholder="ghp_… (optional)" style="max-width:320px" />
-                </label>
-            </div>
-        </section>
-
-        <!-- Sticky sentinel to avoid jitter -->
-        <div id="sticky-sentinel" aria-hidden="true" style="height:1px"></div>
-        <!-- Profile summary -->
-        <section id="profile" class="card sticky" aria-live="polite" style="display:none"></section>
-
-        <!-- Repo grid -->
-        <section id="repos" class="card" style="margin-top:12px;display:none">
-            <div id="repo-grid" class="grid"></div>
-            <div class="footer">
-                <div class="muted"><span id="count">0</span> repos</div>
-                <div style="display:flex;gap:8px;align-items:center">
-                    <button id="prev">Prev</button>
-                    <span class="muted">Page <span id="page">1</span></span>
-                    <button id="next">Next</button>
+            <!-- HEADER ------------------------------------------------------------- -->
+            <header id="app-header"
+                class="fade-in mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight sm:text-3xl">
+                        GitHub Explorer
+                        <span class="brand-gradient bg-clip-text text-lg font-semibold text-transparent">
+                            by Sync_Pundit
+                        </span>
+                    </h1>
+                    <p class="mt-1 text-sm text-slate-400">
+                        OSINT-ready GitHub analysis • Repos, Code, Users & Global Search
+                    </p>
                 </div>
-            </div>
-        </section>
 
-        <div id="error" class="error" role="alert" style="display:none"></div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="badge-green">No data stored</span>
+                    <span id="rate-pill" class="badge-rate">
+                        API remaining: <span id="rate-remaining" class="font-mono">–</span>
+                    </span>
+                </div>
+            </header>
+
+            <!-- APPLICATION SHELL -------------------------------------------------- -->
+            <section class="app-shell fade-in-soft">
+                <!-- MODE TABS + TOKEN ------------------------------------------------ -->
+                <div class="section-top-row">
+                    <div class="mode-tabs">
+                        <button data-mode="profile" class="mode-tab active">Profile Scan</button>
+                        <button data-mode="userfinder" class="mode-tab">User Finder</button>
+                        <button data-mode="global" class="mode-tab">Global Search</button>
+                    </div>
+
+                    <div class="token-field">
+                        <span class="font-medium text-xs text-slate-400">Token</span>
+                        <input id="github-token" type="password" placeholder="ghp_… (optional)" class="token-input" />
+                    </div>
+                </div>
+
+                <!-- ERROR BANNER ----------------------------------------------------- -->
+                <div id="error-banner" class="error-banner hidden"></div>
+
+                <!-- TOAST CONTAINER -------------------------------------------------- -->
+                <div id="toast-container" class="toast-container"></div>
+
+                <!-- PANELS ----------------------------------------------------------- -->
+                <div class="mt-4 space-y-6">
+
+                    <!-- PROFILE PANEL -------------------------------------------------- -->
+                    <section id="panel-profile" class="panel space-y-6">
+                        <!-- Inputs -->
+                        <div class="grid gap-3 md:grid-cols-[2fr,1.2fr,1.4fr]">
+                            <div>
+                                <label class="input-label" for="profile-username">GitHub username</label>
+                                <input id="profile-username" class="input-text"
+                                    placeholder="torvalds, vercel, sync-pundit" />
+                            </div>
+
+                            <div>
+                                <label class="input-label" for="profile-sort">Sort repos</label>
+                                <select id="profile-sort" class="input-text">
+                                    <option value="updated">Updated (desc)</option>
+                                    <option value="stars">Stars (desc)</option>
+                                    <option value="name">Name (A→Z)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="input-label" for="profile-filter">Filter repos</label>
+                                <input id="profile-filter" class="input-text"
+                                    placeholder="Filter by name or description" />
+                            </div>
+                        </div>
+
+                        <!-- ACTION ROW -->
+                        <div class="flex flex-wrap gap-3">
+                            <button id="btn-scan" class="btn-primary">Scan User</button>
+                            <button id="btn-clear" class="btn-secondary">Clear</button>
+                            <button id="btn-copy-profile-url" class="btn-small">Copy Link</button>
+                            <button id="btn-export-json" class="btn-small">Export JSON</button>
+                            <button id="btn-export-csv" class="btn-small">Export CSV</button>
+                        </div>
+
+                        <!-- LAYOUT: PROFILE CARD + REPOS -->
+                        <div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr),minmax(0,2fr)]">
+                            <div id="profile-card" class="profile-card hidden"></div>
+
+                            <div class="space-y-3">
+                                <div class="repo-header">
+                                    <span><span id="repo-count">0</span> repositories</span>
+                                    <div class="flex items-center gap-2">
+                                        <button id="btn-prev" class="btn-page">Prev</button>
+                                        <span class="text-slate-400 text-sm">Page <span id="repo-page">1</span></span>
+                                        <button id="btn-next" class="btn-page">Next</button>
+                                    </div>
+                                </div>
+                                <div id="repo-grid" class="repo-grid"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- USER FINDER PANEL --------------------------------------------- -->
+                    <section id="panel-userfinder" class="panel hidden space-y-6">
+                        <div class="grid gap-3 md:grid-cols-[2fr,auto]">
+                            <div>
+                                <label class="input-label" for="finder-query">Search users (name/login)</label>
+                                <input id="finder-query" class="input-text"
+                                    placeholder="sync pundit, doppel, phantom…" />
+                            </div>
+
+                            <div class="flex items-end">
+                                <button id="btn-finder-search" class="btn-primary">Find Users</button>
+                            </div>
+                        </div>
+
+                        <div id="finder-results" class="result-box"></div>
+                    </section>
+
+                    <!-- GLOBAL SEARCH PANEL ------------------------------------------- -->
+                    <section id="panel-global" class="panel hidden space-y-6">
+                        <div class="grid gap-3 md:grid-cols-[2fr,1fr,auto]">
+                            <div>
+                                <label class="input-label" for="global-q">Global Search</label>
+                                <input id="global-q" class="input-text"
+                                    placeholder="doordash language:go, phantom is:issue" />
+                            </div>
+
+                            <div>
+                                <h3 class="label-small">Presets</h3>
+                                <div id="preset-chips" class="chip-row"></div>
+                            </div>
+
+                            <div>
+                                <h3 class="label-small">Build Query</h3>
+                                <div id="builder-chips" class="chip-row"></div>
+                            </div>
+
+                            <div>
+                                <label class="input-label" for="global-kind">Search type</label>
+                                <select id="global-kind" class="input-text">
+                                    <option value="repositories">Repositories</option>
+                                    <option value="users">Users</option>
+                                    <option value="code">Code</option>
+                                    <option value="commits">Commits</option>
+                                    <option value="issues">Issues / PRs</option>
+                                    <option value="topics">Topics</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-end gap-2">
+                                <button id="btn-global-search" class="btn-primary">Run Search</button>
+                                <button id="btn-copy-global-url" class="btn-small">Copy Link</button>
+                            </div>
+                        </div>
+
+                        <div id="global-results" class="result-box"></div>
+                    </section>
+                </div>
+            </section>
+        </main>
     </div>
 
-
-    <script>
-        const qs = (s, el = document) => el.querySelector(s);
-        const qsa = (s, el = document) => [...el.querySelectorAll(s)];
-        const state = { user: null, repos: [], page: 1, pageSize: 20, filtered: [] };
-
-        const el = {
-            username: qs('#username'),
-            sort: qs('#sort'),
-            filter: qs('#filter'),
-            go: qs('#go'),
-            clear: qs('#clear'),
-            token: qs('#token'),
-            profile: qs('#profile'),
-            repos: qs('#repos'),
-            grid: qs('#repo-grid'),
-            error: qs('#error'),
-            count: qs('#count'),
-            page: qs('#page'),
-            prev: qs('#prev'),
-            next: qs('#next'),
-            exportJson: qs('#export-json'),
-            exportCsv: qs('#export-csv'),
-            rate: qs('#rate'),
-            toolbar: qs('.toolbar'),
-
-        };
-
-        // Simple cache in localStorage by username
-        const cache = {
-            get: (key) => { try { return JSON.parse(localStorage.getItem('gh:' + key)); } catch { return null } },
-            set: (key, val) => localStorage.setItem('gh:' + key, JSON.stringify({ t: Date.now(), ...val })),
-        };
-
-        function fmtNum(n) { return Intl.NumberFormat().format(n); }
-        function fmtDate(s) { return new Date(s).toLocaleString(); }
-
-        async function fetchJson(url, token) {
-            const headers = { 'Accept': 'application/vnd.github+json' };
-            if (token) headers['Authorization'] = 'Bearer ' + token.trim();
-            const r = await fetch(url, { headers });
-            const remain = r.headers.get('x-ratelimit-remaining');
-            const limit = r.headers.get('x-ratelimit-limit');
-            const reset = r.headers.get('x-ratelimit-reset');
-            if (el.rate) el.rate.textContent = remain ? `${remain}/${limit}` : '–';
-            if (!r.ok) {
-                const body = await r.json().catch(() => ({ message: r.statusText }));
-                const when = reset ? new Date(Number(reset) * 1000).toLocaleTimeString() : '';
-                throw new Error(`${r.status} ${body.message || r.statusText} • remaining ${remain}/${limit}${when ? ` • resets ${when}` : ''}`);
-            }
-            return r.json();
-        }
-
-        async function loadUser(username, token) {
-            const url = `https://api.github.com/users/${encodeURIComponent(username)}`;
-            return fetchJson(url, token);
-        }
-
-        async function loadRepos(username, token) {
-            // Pull up to 300 repos (3 pages) sorted by updated
-            let all = [];
-            for (let page = 1; page <= 3; page++) {
-                const url = `https://api.github.com/users/${encodeURIComponent(username)}/repos?per_page=100&page=${page}&sort=updated`;
-                const chunk = await fetchJson(url, token);
-                all = all.concat(chunk);
-                if (chunk.length < 100) break;
-            }
-            return all;
-        }
-
-        function renderProfile(u) {
-            el.profile.style.display = 'block';
-            el.profile.innerHTML = `
-        <div class="profile">
-          <img src="${u.avatar_url}" alt="${u.login} avatar" />
-          <div>
-            <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
-              <h2 style="margin:0">${u.name || u.login}</h2>
-              <span class="muted">@${u.login}</span>
+    <!-- LABEL MODAL ----------------------------------------------------------- -->
+    <div id="label-modal" class="modal hidden">
+        <div data-modal-panel class="modal-panel">
+            <div class="modal-header">
+                <h2 class="text-xl font-semibold">Repository Labels</h2>
+                <button id="label-close" class="modal-close">✕</button>
             </div>
-            <div class="stats">
-              <span>Followers <span class="pill">${fmtNum(u.followers)}</span></span>
-              <span>Following <span class="pill">${fmtNum(u.following)}</span></span>
-              <span>Public Repos <span class="pill">${fmtNum(u.public_repos)}</span></span>
-            </div>
-            ${u.bio ? `<p class="muted" style="margin:.25rem 0 0">${u.bio}</p>` : ''}
-          </div>
-        </div>`;
-        }
 
-        function applyFilters() {
-            const q = el.filter.value.trim().toLowerCase();
-            const sorted = [...state.repos];
-            const sort = el.sort.value;
-            if (sort === 'updated') sorted.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-            if (sort === 'stars') sorted.sort((a, b) => (b.stargazers_count || 0) - (a.stargazers_count || 0));
-            if (sort === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name));
-            state.filtered = q ? sorted.filter(r => (r.name + " " + (r.description || '')).toLowerCase().includes(q)) : sorted;
-            state.page = 1;
-            renderRepos();
-        }
+            <input id="label-filter" class="label-filter" placeholder="Filter labels…" />
+            <div id="label-list" class="label-list"></div>
+        </div>
+    </div>
 
-        function renderRepos() {
-            const start = (state.page - 1) * state.pageSize;
-            const slice = state.filtered.slice(start, start + state.pageSize);
-            el.grid.innerHTML = slice.map(r => `<article class="repo">
-          <h3><a href="${r.html_url}" target="_blank" rel="noopener">${r.name}</a></h3>
-          ${r.description ? `<div class="muted">${r.description}</div>` : ''}
-          <div class="meta">
-            ${r.language ? `<span class="pill">${r.language}</span>` : ''}
-            <span>★ <span class="star-count">${fmtNum(r.stargazers_count || 0)}</span></span>
-            <span>⑂ <span class="fork-count">${fmtNum(r.forks_count || 0)}</span></span>
-            <span>👁️ ${fmtNum(r.watchers || 0)}</span>
-            <span>Updated ${new Date(r.updated_at).toLocaleDateString()}</span>
-            ${r.license ? `<span class="pill" title="${r.license.spdx_id || ''}">${r.license.name}</span>` : ''}
-          </div>
-          <div class="actionbar">
-            <button class="btn-action" data-action="star" data-owner="${r.owner.login}" data-repo="${r.name}" aria-pressed="false">Star</button>
-            <button class="btn-action" data-action="watch" data-owner="${r.owner.login}" data-repo="${r.name}" aria-pressed="false">Watch</button>
-            <button class="btn-action" data-action="fork" data-owner="${r.owner.login}" data-repo="${r.name}">Fork</button>
-          </div>
-        </article>`).join('');
-            el.count.textContent = state.filtered.length;
-            el.page.textContent = state.page;
-            el.repos.style.display = state.filtered.length ? 'block' : 'none';
-            if (!state.filtered.length) el.grid.innerHTML = `<div class="empty">No repositories found for this query.</div>`;
-            // If a token is present, pre-hydrate action button state for visible repos
-            if (el.token.value.trim()) hydrateActionsForVisible();
-        }
-
-        function showError(msg) { el.error.textContent = msg; el.error.style.display = 'block'; }
-        function clearError() { el.error.style.display = 'none'; el.error.textContent = ''; }
-
-        // Toast alert helper
-        function showAlert(message, type = 'info', duration = 4000) {
-            const alertEl = document.getElementById('customAlert');
-            const messageEl = document.getElementById('customAlertMessage');
-            if (!alertEl || !messageEl) return alert(message);
-            alertEl.classList.remove('success', 'info', 'error', 'warning', 'show');
-            alertEl.classList.add(type);
-            messageEl.textContent = message;
-            alertEl.classList.add('show');
-            clearTimeout(showAlert._t);
-            if (duration) showAlert._t = setTimeout(() => alertEl.classList.remove('show'), duration);
-        }
-
-        // Toast stack helper
-        function pushToast(message, type = 'info', duration = 3500) {
-            const host = document.getElementById('toasts');
-            if (!host) return showAlert(message, type, duration);
-            const t = document.createElement('div');
-            t.className = `toast ${type}`;
-            const svg = {
-                success: '<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 7L9 18l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-                info: '<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8h.01M11 12h2v5h-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-                warning: '<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke="currentColor" stroke-width="2"/><path d="M12 9v5M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-                error: '<svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
-            }[type] || '';
-            t.innerHTML = `${svg}<div class="body">${message}</div><button class="close" aria-label="Dismiss">×</button>`;
-            host.appendChild(t);
-            requestAnimationFrame(() => t.classList.add('show'));
-            const remove = () => { t.classList.add('hide'); t.addEventListener('animationend', () => t.remove(), { once: true }); };
-            t.querySelector('.close').addEventListener('click', remove);
-            if (duration) setTimeout(remove, duration);
-            return t;
-        }
-
-        async function search() {
-            const u = el.username.value.trim();
-            if (!u) return;
-            clearError();
-            el.grid.innerHTML = '<div class="muted" style="padding:14px">Loading…</div>';
-            el.repos.style.display = 'block';
-            const token = el.token.value;
-
-            const cached = cache.get(u);
-            if (cached && Date.now() - cached.t < 1000 * 60 * 5) {
-                state.user = cached.user; state.repos = cached.repos; applyFilters(); renderProfile(state.user); return;
-            }
-
-            try {
-                const [user, repos] = await Promise.all([loadUser(u, token), loadRepos(u, token)]);
-                state.user = user; state.repos = repos; cache.set(u, { user, repos });
-                renderProfile(user); applyFilters();
-            } catch (err) { showError(err.message); el.repos.style.display = 'none'; el.profile.style.display = 'none'; }
-        }
-
-        // Export helpers
-        function download(filename, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = filename; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 500); }
-        el.exportJson.addEventListener('click', () => { if (!state.repos.length) return; download(`${state.user.login}-repos.json`, JSON.stringify(state.filtered, null, 2)); });
-        el.exportCsv.addEventListener('click', () => { if (!state.repos.length) return; const cols = ['name', 'html_url', 'description', 'language', 'stargazers_count', 'forks_count', 'watchers', 'updated_at']; const rows = state.filtered.map(r => cols.map(c => `"${String(r[c] ?? '').replaceAll('"', '""')}"`).join(',')); download(`${state.user.login}-repos.csv`, [cols.join(','), ...rows].join('\n')); });
-
-        // Events
-        el.go.addEventListener('click', search);
-        el.clear.addEventListener('click', () => { el.username.value = ''; el.filter.value = ''; state.repos = []; state.filtered = []; el.profile.style.display = 'none'; el.repos.style.display = 'none'; clearError(); });
-        el.sort.addEventListener('change', applyFilters);
-        el.filter.addEventListener('input', () => { applyFilters(); });
-        el.prev.addEventListener('click', () => { if (state.page > 1) { state.page--; renderRepos(); } });
-        el.next.addEventListener('click', () => { if (state.page * state.pageSize < state.filtered.length) { state.page++; renderRepos(); } });
-        // Re-hydrate when token changes
-        el.token.addEventListener('change', () => { if (state.filtered.length) hydrateActionsForVisible(); });
-        el.token.addEventListener('blur', () => { if (state.filtered.length) hydrateActionsForVisible(); });
-
-        // QoL: Enter to search
-        el.username.addEventListener('keydown', (e) => { if (e.key === 'Enter') search(); });
-
-        // Hydrate from ?user= query
-        const params = new URLSearchParams(location.search);
-        if (params.get('user')) { el.username.value = params.get('user'); search(); }
-
-        // Sticky visual state toggler (sentinel-based to avoid jank)
-        const sentinel = document.getElementById('sticky-sentinel');
-        if (sentinel) {
-            const io = new IntersectionObserver(([entry]) => {
-                // When sentinel is NOT visible (scrolled past top + offset), set stuck
-                const stuck = entry.intersectionRatio === 0;
-                el.profile.classList.toggle('is-stuck', stuck);
-            }, { rootMargin: '-12px 0px 0px 0px', threshold: [0, 1] });
-            io.observe(sentinel);
-        }        // ---- Action state hydration (pre-detect starred/watched) ----
-        async function isStarred(owner, repo) {
-            const t = el.token.value.trim(); if (!t) return false;
-            const r = await fetch(`https://api.github.com/user/starred/${owner}/${repo}`, { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + t } });
-            return r.status === 204; // 204 if starred, 404 if not
-        }
-        async function isWatched(owner, repo) {
-            const t = el.token.value.trim(); if (!t) return false;
-            const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/subscription`, { headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + t } });
-            if (r.status === 404) return false;
-            if (!r.ok) return false;
-            const data = await r.json().catch(() => null);
-            return !!(data && (data.subscribed || data.ignored === false));
-        }
-        function setBtnState(btn, on, labels) {
-            btn.dataset.on = String(on);
-            btn.textContent = on ? labels.on : labels.off;
-            btn.classList.toggle('on', on);
-            btn.setAttribute('aria-pressed', String(on));
-        }
-        async function hydrateActionsForVisible() {
-            const buttons = qsa('.actionbar .btn-action');
-            const stars = buttons.filter(b => b.dataset.action === 'star');
-            const watches = buttons.filter(b => b.dataset.action === 'watch');
-            await Promise.allSettled(stars.map(async b => {
-                try { const on = await isStarred(b.dataset.owner, b.dataset.repo); setBtnState(b, on, { on: 'Unstar', off: 'Star' }); } catch { }
-            }));
-            await Promise.allSettled(watches.map(async b => {
-                try { const on = await isWatched(b.dataset.owner, b.dataset.repo); setBtnState(b, on, { on: 'Unwatch', off: 'Watch' }); } catch { }
-            }));
-        }
-
-        // --- Repo quick actions (require a token with appropriate scopes) ---
-        async function apiStar(owner, repo, on) {
-            const url = `https://api.github.com/user/starred/${owner}/${repo}`;
-            const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + el.token.value.trim() };
-            const r = await fetch(url, { method: on ? 'PUT' : 'DELETE', headers });
-            if (!r.ok && r.status !== 304) throw new Error('Star failed');
-        }
-        async function apiWatch(owner, repo, sub) {
-            const url = `https://api.github.com/repos/${owner}/${repo}/subscription`;
-            const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + el.token.value.trim() };
-            const r = await fetch(url, { method: sub ? 'PUT' : 'DELETE', headers, body: sub ? JSON.stringify({ subscribed: true }) : undefined });
-            if (!r.ok && r.status !== 304) throw new Error('Watch failed');
-        }
-        async function apiFork(owner, repo) {
-            const url = `https://api.github.com/repos/${owner}/${repo}/forks`;
-            const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + el.token.value.trim() };
-            const r = await fetch(url, { method: 'POST', headers });
-            if (!r.ok) throw new Error('Fork failed');
-        }
-        function findAndBump(owner, name, field, delta) {
-            const hit = state.repos.find(x => x.owner.login === owner && x.name === name);
-            if (hit) { hit[field] = (hit[field] || 0) + delta; }
-        }
-        el.grid.addEventListener('click', async (e) => {
-            const btn = e.target.closest('[data-action]');
-            if (!btn) return;
-            if (!el.token.value.trim()) { pushToast('A GitHub token is required for actions. For public repos, use a token with the “public_repo” scope; for private, use “repo”.', 'warning', 3000); return; }
-            const { action, owner, repo } = btn.dataset;
-            btn.disabled = true;
-            const card = btn.closest('article');
-            try {
-                if (action === 'star') {
-                    const on = btn.dataset.on !== 'true';
-                    await apiStar(owner, repo, on);
-                    setBtnState(btn, on, { on: 'Unstar', off: 'Star' });
-                    pushToast((on ? 'Starred ' : 'Unstarred ') + `${owner}/${repo}`, on ? 'success' : 'info');
-                    const starEl = card.querySelector('.star-count');
-                    if (starEl) { const cur = parseInt(starEl.textContent.replaceAll(',', '')) || 0; const next = on ? cur + 1 : Math.max(0, cur - 1); starEl.textContent = fmtNum(next); }
-                    findAndBump(owner, repo, 'stargazers_count', on ? 1 : -1);
-                } else if (action === 'watch') {
-                    const sub = btn.dataset.on !== 'true';
-                    await apiWatch(owner, repo, sub);
-                    setBtnState(btn, sub, { on: 'Unwatch', off: 'Watch' });
-                    pushToast((sub ? 'Watching ' : 'Unwatched ') + `${owner}/${repo}`, sub ? 'success' : 'info');
-                } else if (action === 'fork') {
-                    await apiFork(owner, repo);
-                    btn.textContent = 'Forked ✓';
-                    pushToast(`Forked ${owner}/${repo}`, 'success');
-                    const forkEl = card.querySelector('.fork-count');
-                    if (forkEl) { const cur = parseInt(forkEl.textContent.replaceAll(',', '')) || 0; forkEl.textContent = fmtNum(cur + 1); }
-                    findAndBump(owner, repo, 'forks_count', 1);
-                }
-            } catch (err) { pushToast(err.message || 'Action failed', 'error'); }
-            finally { btn.disabled = false; }
-        });
-    </script>
-</body>
-
-</html>
+    <!-- MAIN APP LOGIC -->
+    <script type="module" src="assets/app.js"></script>
