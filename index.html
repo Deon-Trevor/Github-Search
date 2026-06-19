@@ -5,198 +5,193 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GitHub Explorer • Sync_Pundit</title>
-    <meta name="description"
-        content="Fast, no‑framework GitHub profile & repo explorer. Search, sort, filter, export." />
-    <meta name="keywords" content="OSINT, GitHub, Sync_Pundit,👽😎🔱🔥, Deon Trevor Mpofu, syncpundit, curious n00b">
-    <meta name="author" content="Sync_Pundit 👽😎🔱🔥">
-    <link rel="icon"
-        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.11.79-.26.79-.58v-2.03c-3.22.7-3.9-1.35-3.9-1.35-.53-1.37-1.3-1.74-1.3-1.74-1.06-.73.08-.72.08-.72 1.17.08 1.78 1.21 1.78 1.21 1.04 1.8 2.72 1.28 3.39.98.11-.77.41-1.28.74-1.57-2.57-.29-5.28-1.29-5.28-5.74 0-1.27.45-2.3 1.2-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.32 3.22 1.19a11.2 11.2 0 0 1 5.86 0c2.24-1.51 3.22-1.19 3.22-1.19.63 1.6.23 2.78.11 3.07.75.81 1.2 1.84 1.2 3.11 0 4.46-2.71 5.44-5.3 5.73.42.36.79 1.08.79 2.19v3.25c0 .32.21.69.8.57A11.5 11.5 0 0 0 12 .5Z' fill='%23000'/%3E%3C/svg%3E" />
+    <meta name="description" content="Fast browser-based GitHub investigation console for profiles, users, repositories, issues, code and topics." />
+    <meta name="keywords" content="OSINT, GitHub, Sync_Pundit, Deon Trevor Mpofu, syncpundit" />
+    <meta name="author" content="Sync_Pundit" />
+    <link rel="icon" href="assets/github-mark.svg" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tailwind (CDN version for development; swap with compiled CSS for production) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Custom Tailwind extensions + embed mode + animations -->
     <link rel="stylesheet" href="assets/styles.css" />
 </head>
 
-<body class="app-bg min-h-screen text-slate-100">
-    <div class="min-h-screen bg-overlay">
-        <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-
-            <!-- HEADER ------------------------------------------------------------- -->
-            <header id="app-header"
-                class="fade-in mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<body class="app-bg min-h-screen text-stone-100">
+    <div class="noise-layer"></div>
+    <main class="workspace-shell">
+        <header id="app-header" class="app-header">
+            <div class="brand-lockup">
+                <div class="brand-mark" aria-hidden="true">
+                    <img src="assets/github-mark-white.svg" alt="" />
+                </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight sm:text-3xl">
-                        GitHub Explorer
-                        <span class="brand-gradient bg-clip-text text-lg font-semibold text-transparent">
-                            by Sync_Pundit
-                        </span>
-                    </h1>
-                    <p class="mt-1 text-sm text-slate-400">
-                        OSINT-ready GitHub analysis • Repos, Code, Users & Global Search
-                    </p>
+                    <p class="eyebrow">Investigation console</p>
+                    <h1>GitHub Explorer <span>by Sync_Pundit</span></h1>
+                    <p class="header-copy">Pivot from names to users, repos, labels and global GitHub search without losing context.</p>
                 </div>
+            </div>
 
-                <div class="flex flex-wrap items-center gap-3">
-                    <span class="badge-green">No data stored</span>
-                    <span id="rate-pill" class="badge-rate">
-                        API remaining: <span id="rate-remaining" class="font-mono">–</span>
-                    </span>
-                </div>
-            </header>
+            <div class="header-actions">
+                <span class="badge-green">Local only</span>
+                <button id="rate-pill" class="badge-rate" type="button" title="GitHub API rate limit. Add a token if this gets low.">
+                    API <span id="rate-remaining" class="font-mono">-</span>
+                </button>
+                <details class="auth-menu">
+                    <summary>Auth</summary>
+                    <label for="github-token">GitHub token</label>
+                    <input id="github-token" type="password" placeholder="ghp_... optional" autocomplete="off" />
+                    <p>Stored only in this browser session. Use it for higher limits or endpoints that require auth.</p>
+                </details>
+            </div>
+        </header>
 
-            <!-- APPLICATION SHELL -------------------------------------------------- -->
-            <section class="app-shell fade-in-soft">
-                <!-- MODE TABS + TOKEN ------------------------------------------------ -->
-                <div class="section-top-row">
-                    <div class="mode-tabs">
-                        <button data-mode="profile" class="mode-tab active">Profile Scan</button>
-                        <button data-mode="userfinder" class="mode-tab">User Finder</button>
-                        <button data-mode="global" class="mode-tab">Global Search</button>
+        <section class="command-deck" aria-label="Search controls">
+            <div class="mode-tabs" role="tablist" aria-label="Search mode">
+                <button data-mode="profile" class="mode-tab active" type="button">Profile</button>
+                <button data-mode="userfinder" class="mode-tab" type="button">Find Users</button>
+                <button data-mode="global" class="mode-tab" type="button">Global Search</button>
+            </div>
+
+            <div id="error-banner" class="error-banner hidden" role="alert"></div>
+            <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+            <section id="panel-profile" class="panel active-panel" aria-labelledby="profile-heading">
+                <div class="command-grid profile-command-grid">
+                    <div class="field-stack command-primary">
+                        <label class="input-label" for="profile-username">Exact GitHub username</label>
+                        <input id="profile-username" class="input-text command-input" placeholder="Deon-Trevor, torvalds, vercel" />
                     </div>
-
-                    <div class="token-field">
-                        <span class="font-medium text-xs text-slate-400">Token</span>
-                        <input id="github-token" type="password" placeholder="ghp_… (optional)" class="token-input" />
+                    <div class="field-stack">
+                        <label class="input-label" for="profile-sort">Sort repos</label>
+                        <select id="profile-sort" class="input-text">
+                            <option value="updated">Updated first</option>
+                            <option value="stars">Most starred</option>
+                            <option value="name">Name A-Z</option>
+                        </select>
+                    </div>
+                    <div class="field-stack">
+                        <label class="input-label" for="profile-filter">Filter visible repos</label>
+                        <input id="profile-filter" class="input-text" placeholder="name, language, description" />
+                    </div>
+                    <div class="command-actions">
+                        <button id="btn-scan" class="btn-primary" type="button">Scan Profile</button>
+                        <button id="btn-clear" class="btn-secondary" type="button">Reset</button>
                     </div>
                 </div>
 
-                <!-- ERROR BANNER ----------------------------------------------------- -->
-                <div id="error-banner" class="error-banner hidden"></div>
+                <div class="utility-row">
+                    <button id="btn-copy-profile-url" class="btn-small" type="button" disabled>Copy profile link</button>
+                    <button id="btn-export-json" class="btn-small" type="button" disabled>Export JSON</button>
+                    <button id="btn-export-csv" class="btn-small" type="button" disabled>Export CSV</button>
+                </div>
 
-                <!-- TOAST CONTAINER -------------------------------------------------- -->
-                <div id="toast-container" class="toast-container"></div>
+                <div class="results-layout profile-layout">
+                    <aside id="profile-card" class="profile-card state-card" aria-live="polite">
+                        <p class="empty-kicker">No profile loaded</p>
+                        <p class="empty-title">Start with an exact username.</p>
+                        <p class="empty-copy">If you only know a real name or alias, use Find Users first, then pivot back into Profile.</p>
+                    </aside>
 
-                <!-- PANELS ----------------------------------------------------------- -->
-                <div class="mt-4 space-y-6">
-
-                    <!-- PROFILE PANEL -------------------------------------------------- -->
-                    <section id="panel-profile" class="panel space-y-6">
-                        <!-- Inputs -->
-                        <div class="grid gap-3 md:grid-cols-[2fr,1.2fr,1.4fr]">
+                    <section class="results-panel" aria-labelledby="repo-heading">
+                        <div class="results-toolbar">
                             <div>
-                                <label class="input-label" for="profile-username">GitHub username</label>
-                                <input id="profile-username" class="input-text"
-                                    placeholder="torvalds, vercel, sync-pundit" />
+                                <p class="eyebrow">Repository surface</p>
+                                <h2 id="repo-heading"><span id="repo-count">0</span> repositories</h2>
                             </div>
-
-                            <div>
-                                <label class="input-label" for="profile-sort">Sort repos</label>
-                                <select id="profile-sort" class="input-text">
-                                    <option value="updated">Updated (desc)</option>
-                                    <option value="stars">Stars (desc)</option>
-                                    <option value="name">Name (A→Z)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="input-label" for="profile-filter">Filter repos</label>
-                                <input id="profile-filter" class="input-text"
-                                    placeholder="Filter by name or description" />
+                            <div class="pager-controls">
+                                <button id="btn-prev" class="btn-page" type="button" disabled>Prev</button>
+                                <span>Page <span id="repo-page">1</span></span>
+                                <button id="btn-next" class="btn-page" type="button" disabled>Next</button>
                             </div>
                         </div>
-
-                        <!-- ACTION ROW -->
-                        <div class="flex flex-wrap gap-3">
-                            <button id="btn-scan" class="btn-primary">Scan User</button>
-                            <button id="btn-clear" class="btn-secondary">Clear</button>
-                            <button id="btn-copy-profile-url" class="btn-small">Copy Link</button>
-                            <button id="btn-export-json" class="btn-small">Export JSON</button>
-                            <button id="btn-export-csv" class="btn-small">Export CSV</button>
-                        </div>
-
-                        <!-- LAYOUT: PROFILE CARD + REPOS -->
-                        <div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr),minmax(0,2fr)]">
-                            <div id="profile-card" class="profile-card hidden"></div>
-
-                            <div class="space-y-3">
-                                <div class="repo-header">
-                                    <span><span id="repo-count">0</span> repositories</span>
-                                    <div class="flex items-center gap-2">
-                                        <button id="btn-prev" class="btn-page">Prev</button>
-                                        <span class="text-slate-400 text-sm">Page <span id="repo-page">1</span></span>
-                                        <button id="btn-next" class="btn-page">Next</button>
-                                    </div>
-                                </div>
-                                <div id="repo-grid" class="repo-grid"></div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- USER FINDER PANEL --------------------------------------------- -->
-                    <section id="panel-userfinder" class="panel hidden space-y-6">
-                        <div class="grid gap-3 md:grid-cols-[2fr,auto]">
-                            <div>
-                                <label class="input-label" for="finder-query">Search users (name/login)</label>
-                                <input id="finder-query" class="input-text"
-                                    placeholder="sync pundit, doppel, phantom…" />
-                            </div>
-
-                            <div class="flex items-end">
-                                <button id="btn-finder-search" class="btn-primary">Find Users</button>
-                            </div>
-                        </div>
-
-                        <div id="finder-results" class="result-box"></div>
-                    </section>
-
-                    <!-- GLOBAL SEARCH PANEL ------------------------------------------- -->
-                    <section id="panel-global" class="panel hidden space-y-6">
-                        <div class="grid gap-3 md:grid-cols-[2fr,1fr,auto]">
-                            <div>
-                                <label class="input-label" for="global-q">Global Search</label>
-                                <input id="global-q" class="input-text"
-                                    placeholder="doordash language:go, phantom is:issue" />
-                            </div>
-
-                            <div>
-                                <h3 class="label-small">Presets</h3>
-                                <div id="preset-chips" class="chip-row"></div>
-                            </div>
-
-                            <div>
-                                <h3 class="label-small">Build Query</h3>
-                                <div id="builder-chips" class="chip-row"></div>
-                            </div>
-
-                            <div>
-                                <label class="input-label" for="global-kind">Search type</label>
-                                <select id="global-kind" class="input-text">
-                                    <option value="repositories">Repositories</option>
-                                    <option value="users">Users</option>
-                                    <option value="code">Code</option>
-                                    <option value="commits">Commits</option>
-                                    <option value="issues">Issues / PRs</option>
-                                    <option value="topics">Topics</option>
-                                </select>
-                            </div>
-
-                            <div class="flex items-end gap-2">
-                                <button id="btn-global-search" class="btn-primary">Run Search</button>
-                                <button id="btn-copy-global-url" class="btn-small">Copy Link</button>
-                            </div>
-                        </div>
-
-                        <div id="global-results" class="result-box"></div>
+                        <div id="repo-grid" class="result-list" aria-live="polite"></div>
                     </section>
                 </div>
             </section>
-        </main>
-    </div>
 
-    <!-- LABEL MODAL ----------------------------------------------------------- -->
-    <div id="label-modal" class="modal hidden">
+            <section id="panel-userfinder" class="panel hidden" aria-labelledby="finder-heading">
+                <div class="command-grid finder-command-grid">
+                    <div class="field-stack command-primary">
+                        <label class="input-label" for="finder-query">Name, alias, or login fragment</label>
+                        <input id="finder-query" class="input-text command-input" placeholder="Deon Trevor Mpofu, Sync_Pundit, SyncPundit" />
+                    </div>
+                    <div class="command-actions">
+                        <button id="btn-finder-search" class="btn-primary" type="button">Find Users</button>
+                    </div>
+                </div>
+                <section class="results-panel single-panel" aria-labelledby="finder-heading">
+                    <div class="results-toolbar">
+                        <div>
+                            <p class="eyebrow">Identity candidates</p>
+                            <h2 id="finder-heading">User Finder</h2>
+                        </div>
+                        <p class="toolbar-hint">Use a candidate to pivot into an exact profile scan.</p>
+                    </div>
+                    <div id="finder-results" class="result-list" aria-live="polite"></div>
+                </section>
+            </section>
+
+            <section id="panel-global" class="panel hidden" aria-labelledby="global-heading">
+                <div class="command-grid global-command-grid">
+                    <div class="field-stack command-primary">
+                        <label class="input-label" for="global-q">Global GitHub query</label>
+                        <input id="global-q" class="input-text command-input" placeholder="Sync_Pundit, user:Deon-Trevor, language:python" />
+                    </div>
+                    <div class="field-stack">
+                        <label class="input-label" for="global-kind">Search type</label>
+                        <select id="global-kind" class="input-text">
+                            <option value="repositories">Repositories</option>
+                            <option value="users">Users</option>
+                            <option value="code">Code</option>
+                            <option value="commits">Commits</option>
+                            <option value="issues">Issues / PRs</option>
+                            <option value="topics">Topics</option>
+                        </select>
+                    </div>
+                    <div class="command-actions">
+                        <button id="btn-global-search" class="btn-primary" type="button">Run Search</button>
+                        <button id="btn-copy-global-url" class="btn-secondary" type="button" disabled>Copy Link</button>
+                    </div>
+                </div>
+
+                <div class="query-assist" aria-label="Query helpers">
+                    <div>
+                        <p class="assist-title">Presets</p>
+                        <div id="preset-chips" class="chip-row"></div>
+                    </div>
+                    <div>
+                        <p class="assist-title">Build Query</p>
+                        <div id="builder-chips" class="chip-row"></div>
+                    </div>
+                </div>
+
+                <section class="results-panel single-panel" aria-labelledby="global-heading">
+                    <div class="results-toolbar">
+                        <div>
+                            <p class="eyebrow">Search results</p>
+                            <h2 id="global-heading">Global Search</h2>
+                        </div>
+                        <p class="toolbar-hint">First page of GitHub API results. Use query qualifiers to narrow high-volume searches.</p>
+                    </div>
+                    <div id="global-results" class="result-list" aria-live="polite"></div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <div id="label-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="label-modal-title">
         <div data-modal-panel class="modal-panel">
             <div class="modal-header">
-                <h2 class="text-xl font-semibold">Repository Labels</h2>
-                <button id="label-close" class="modal-close">✕</button>
+                <div>
+                    <p class="eyebrow">Repository metadata</p>
+                    <h2 id="label-modal-title">Labels</h2>
+                </div>
+                <button id="label-close" class="modal-close" type="button" aria-label="Close labels modal">x</button>
             </div>
 
-            <input id="label-filter" class="label-filter" placeholder="Filter labels…" />
+            <input id="label-filter" class="label-filter" placeholder="Filter labels..." />
             <div id="label-list" class="label-list"></div>
         </div>
     </div>
 
-    <!-- MAIN APP LOGIC -->
     <script type="module" src="assets/app.js"></script>
+</body>
+
+</html>
