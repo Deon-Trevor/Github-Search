@@ -51,6 +51,7 @@ export const el = {
 
     // Token
     token: $("#github-token"),
+    authMenu: $(".auth-menu"),
 
     // Modal
     modal: $("#label-modal"),
@@ -58,6 +59,10 @@ export const el = {
     modalList: $("#label-list"),
     modalFilter: $("#label-filter"),
     modalClose: $("#label-close"),
+    repoModal: $("#repo-modal"),
+    repoModalPanel: $('[data-repo-modal-panel]'),
+    repoModalBody: $("#repo-detail-body"),
+    repoModalClose: $("#repo-detail-close"),
 
     // System
     errorBanner: $("#error-banner"),

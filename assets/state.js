@@ -12,7 +12,8 @@ export const state = {
     filtered: [],
     page: 1,
     pageSize: 20,
-    userSearchResults: []
+    userSearchResults: [],
+    globalResults: [],
 };
 
 export const PRESETS = [

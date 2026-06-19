@@ -62,6 +62,8 @@ function metaPill(value) {
 function resultShell(kind) {
     const article = document.createElement("article");
     article.className = `result-row result-${kind}`;
+    article.tabIndex = 0;
+    article.setAttribute("role", "button");
     return article;
 }
 
@@ -156,10 +158,12 @@ export function repoCardNode(repo, { titleOverride, showWatchers = false } = {})
     const article = resultShell("repo");
     article.dataset.owner = owner;
     article.dataset.repo = name;
+    article.dataset.primaryAction = "repo-detail";
+    article.setAttribute("aria-label", `Open repository details for ${owner ? `${owner}/` : ""}${name}`);
 
     const main = document.createElement("div");
     main.className = "result-main";
-    main.append(link(repo.html_url, "result-title", title));
+    main.append(text("h3", "result-title", title));
     if (repo.description) main.append(text("p", "result-desc", repo.description));
 
     const meta = document.createElement("div");
@@ -225,11 +229,14 @@ export function renderUserResults(target, items, { allowUse = true } = {}) {
 
 function userResultNode(item, { allowUse = true } = {}) {
     const article = resultShell("user");
+    article.dataset.primaryAction = "scan-user";
+    article.dataset.login = item.login;
+    article.setAttribute("aria-label", `Scan GitHub profile ${item.login}`);
     article.append(img(item.avatar_url, "avatar-sm", `${item.login} avatar`));
 
     const main = document.createElement("div");
     main.className = "result-main";
-    main.append(link(item.html_url, "result-title", `@${item.login}`));
+    main.append(text("h3", "result-title", `@${item.login}`));
     const meta = document.createElement("div");
     meta.className = "result-meta";
     meta.append(metaPill(item.type || "User"));
@@ -252,6 +259,9 @@ export function renderIssueNode(item) {
     const article = resultShell("issue");
     article.dataset.owner = owner;
     article.dataset.repo = repo;
+    article.dataset.primaryAction = "open-url";
+    article.dataset.url = item.html_url || "";
+    article.setAttribute("aria-label", `Open issue ${item.title || item.number || ""} on GitHub`);
 
     const main = document.createElement("div");
     main.className = "result-main";
@@ -286,6 +296,9 @@ export function renderGlobalResults(kind, items) {
         else if (kind === "issues") el.globalResults.append(renderIssueNode(item));
         else {
             const article = resultShell("raw");
+            article.dataset.primaryAction = "open-url";
+            article.dataset.url = item.html_url || "";
+            article.setAttribute("aria-label", "Open GitHub result");
             const main = document.createElement("div");
             main.className = "result-main";
             main.append(link(item.html_url, "result-title", item.name || item.title || item.path || item.full_name || item.login || "GitHub result"));
@@ -294,6 +307,75 @@ export function renderGlobalResults(kind, items) {
             el.globalResults.append(article);
         }
     });
+}
+
+export function renderRepoDetail(repo) {
+    clear(el.repoModalBody);
+    if (!repo) {
+        renderState(el.repoModalBody, {
+            title: "Repository details unavailable.",
+            copy: "The selected row is no longer present in the current result set.",
+        });
+        return;
+    }
+
+    const header = document.createElement("section");
+    header.className = "repo-detail-hero";
+    const owner = repo.owner?.login || "";
+    const fullName = repo.full_name || (owner ? `${owner}/${repo.name}` : repo.name);
+    header.append(text("p", "eyebrow", "Repository dossier"));
+    header.append(link(repo.html_url, "repo-detail-title", fullName));
+    if (repo.description) header.append(text("p", "repo-detail-desc", repo.description));
+
+    const stats = document.createElement("div");
+    stats.className = "detail-stat-grid";
+    [
+        ["Language", repo.language || "Unknown"],
+        ["Stars", repo.stargazers_count ?? 0],
+        ["Forks", repo.forks_count ?? 0],
+        ["Watchers", repo.watchers ?? repo.watchers_count ?? 0],
+        ["Open issues", repo.open_issues_count ?? 0],
+        ["Visibility", repo.visibility || (repo.private ? "private" : "public")],
+    ].forEach(([label, value]) => {
+        const item = document.createElement("div");
+        item.className = "detail-stat";
+        item.append(text("span", "detail-stat-label", label));
+        item.append(text("strong", "", value));
+        stats.append(item);
+    });
+
+    const meta = document.createElement("section");
+    meta.className = "detail-meta-grid";
+    [
+        ["Default branch", repo.default_branch],
+        ["Created", repo.created_at ? new Date(repo.created_at).toLocaleString() : null],
+        ["Updated", repo.updated_at ? new Date(repo.updated_at).toLocaleString() : null],
+        ["Pushed", repo.pushed_at ? new Date(repo.pushed_at).toLocaleString() : null],
+        ["License", repo.license?.name],
+        ["Archived", repo.archived ? "Yes" : "No"],
+    ].forEach(([label, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        const item = document.createElement("div");
+        item.className = "detail-meta-row";
+        item.append(text("span", "", label));
+        item.append(text("strong", "", value));
+        meta.append(item);
+    });
+
+    const actions = document.createElement("div");
+    actions.className = "detail-actions";
+    actions.append(link(repo.html_url, "btn-primary", "Open on GitHub"));
+    if (owner) actions.append(button("Scan owner", "btn-use-user", { login: owner }));
+    if (owner && repo.name) actions.append(button("Labels", "btn-action", { action: "labels", owner, repo: repo.name }));
+
+    const labels = document.createElement("section");
+    labels.className = "repo-label-drawer hidden";
+    labels.dataset.repoLabels = "true";
+    labels.append(text("p", "eyebrow", "Label intelligence"));
+    labels.append(text("p", "empty-copy", "Repository labels will appear here without leaving this dossier."));
+
+    header.append(stats, actions);
+    el.repoModalBody.append(header, labels, meta);
 }
 
 export function renderChips() {
@@ -308,10 +390,10 @@ export function renderChips() {
     });
 }
 
-export function renderLabelList(labels) {
-    clear(el.modalList);
+export function renderLabelList(labels, target = el.modalList) {
+    clear(target);
     if (!labels.length) {
-        renderState(el.modalList, { title: "No labels found.", copy: "This repository does not expose labels." });
+        renderState(target, { title: "No labels found.", copy: "This repository does not expose labels." });
         return;
     }
     labels.forEach((lb) => {
@@ -321,6 +403,6 @@ export function renderLabelList(labels) {
         const color = text("span", "label-color", `#${lb.color}`);
         color.style.color = `#${lb.color}`;
         row.append(color);
-        el.modalList.append(row);
+        target.append(row);
     });
 }

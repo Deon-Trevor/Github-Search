@@ -447,11 +447,12 @@ summary:focus-visible {
 }
 .result-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 14px;
-    align-items: center;
-    min-height: 82px;
-    padding: 15px 18px;
+    grid-template-columns: minmax(0, 1fr) minmax(130px, max-content);
+    gap: 18px;
+    align-items: start;
+    min-height: 104px;
+    padding: 18px 20px 20px;
+    overflow: hidden;
     background: rgba(12, 19, 28, 0.98);
     transition: background 0.16s ease, box-shadow 0.16s ease;
 }
@@ -459,14 +460,24 @@ summary:focus-visible {
     background: rgba(18, 29, 42, 0.99);
     box-shadow: inset 3px 0 var(--cyan);
 }
-.result-user { grid-template-columns: auto minmax(0, 1fr) auto; }
-.result-main { min-width: 0; }
+.result-user { grid-template-columns: auto minmax(0, 1fr) minmax(130px, max-content); }
+.result-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+    padding-bottom: 2px;
+    overflow: hidden;
+}
 .result-title {
-    display: inline-block;
+    display: block;
     max-width: 100%;
     color: var(--text-strong);
     overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
     font-size: 15px;
+    line-height: 1.28;
     font-weight: 740;
     letter-spacing: -0.015em;
     text-decoration: none;
@@ -474,18 +485,33 @@ summary:focus-visible {
 .result-title:hover,
 .profile-login:hover { color: var(--cyan); text-decoration: underline; }
 .result-desc {
-    margin: 5px 0 0;
+    margin: 7px 0 0;
     color: var(--muted);
     font-size: 13px;
-    line-height: 1.42;
+    line-height: 1.5;
     overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+    max-width: 72ch;
+    max-height: 6em;
+    overflow: hidden;
 }
 .result-meta,
-.stat-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.stat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 0 0 auto;
+    gap: 7px;
+    max-width: 100%;
+    margin-top: 13px;
+    position: relative;
+    z-index: 1;
+}
 .meta-pill {
     display: inline-flex;
     align-items: center;
     min-height: 24px;
+    line-height: 1.2;
     border: 1px solid var(--line);
     border-radius: 999px;
     color: #aeb9c8;
@@ -493,6 +519,13 @@ summary:focus-visible {
     padding: 3px 8px;
     font-family: var(--mono);
     font-size: 10px;
+}
+
+.row-actions {
+    justify-content: flex-end;
+    align-self: center;
+    min-width: 0;
+    max-width: 180px;
 }
 
 .avatar-sm,
@@ -750,5 +783,202 @@ summary:focus-visible {
         border: 2px solid rgba(8, 13, 19, 0.9);
         border-radius: 999px;
         background: linear-gradient(var(--cyan), rgba(247, 184, 75, 0.7));
+    }
+}
+
+.result-row[data-primary-action] {
+    cursor: pointer;
+}
+
+.result-row[data-primary-action] .result-title {
+    margin: 0;
+}
+
+.result-row[data-primary-action]:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: -2px;
+}
+
+.repo-detail-panel {
+    width: min(760px, 100%);
+}
+
+#repo-detail-body {
+    margin-top: 16px;
+}
+
+.repo-detail-hero {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 18% 0%, rgba(57, 213, 232, 0.12), transparent 34rem),
+        rgba(6, 10, 15, 0.72);
+    padding: 18px;
+}
+
+.repo-detail-title {
+    display: inline-block;
+    color: var(--text-strong);
+    font-size: clamp(24px, 4vw, 38px);
+    font-weight: 820;
+    letter-spacing: -0.055em;
+    line-height: 1;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.repo-detail-title:hover {
+    color: var(--cyan);
+    text-decoration: underline;
+}
+
+.repo-detail-desc {
+    max-width: 62rem;
+    margin: 12px 0 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+.detail-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.detail-stat {
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.035);
+    padding: 11px 12px;
+}
+
+.detail-stat-label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.detail-stat strong {
+    color: var(--text-strong);
+    font-size: 15px;
+}
+
+.detail-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    margin-top: 14px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--line);
+}
+
+.detail-meta-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    background: rgba(10, 16, 23, 0.96);
+    padding: 12px 14px;
+}
+
+.detail-meta-row span {
+    color: var(--muted);
+}
+
+.detail-meta-row strong {
+    color: var(--text-strong);
+    text-align: right;
+}
+
+.detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 18px;
+}
+
+@media (max-width: 620px) {
+    .detail-stat-grid,
+    .detail-meta-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-meta-row {
+        display: grid;
+    }
+
+    .detail-meta-row strong {
+        text-align: left;
+    }
+}
+
+/* Detail views should sit above the page, not disappear into the scrim. */
+.modal {
+    background: rgba(2, 5, 8, 0.48);
+}
+
+.modal-panel,
+.repo-detail-panel {
+    background: linear-gradient(180deg, #152232, #0f1823 58%, #0b121a);
+    border-color: rgba(151, 165, 181, 0.42);
+}
+
+.repo-detail-panel {
+    box-shadow: 0 34px 110px rgba(0, 0, 0, 0.62), 0 0 0 1px rgba(57, 213, 232, 0.1) inset;
+}
+
+.result-list {
+    scroll-padding-bottom: 32px;
+}
+
+.result-list::after {
+    content: "";
+    display: block;
+    height: 28px;
+    background: rgba(12, 19, 28, 0.98);
+}
+
+.result-row:last-of-type {
+    margin-bottom: 0;
+}
+
+.repo-label-drawer {
+    margin-top: 14px;
+    border: 1px solid rgba(57, 213, 232, 0.24);
+    border-radius: 18px;
+    background:
+        linear-gradient(135deg, rgba(57, 213, 232, 0.09), transparent 42%),
+        rgba(5, 10, 15, 0.82);
+    padding: 14px;
+}
+
+.repo-label-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.repo-label-header h3 {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: 18px;
+    font-weight: 820;
+}
+
+.repo-label-drawer .label-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 620px) {
+    .repo-label-drawer .label-list {
+        grid-template-columns: 1fr;
     }
 }

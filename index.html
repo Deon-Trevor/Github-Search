@@ -191,6 +191,20 @@
         </div>
     </div>
 
+    <div id="repo-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="repo-detail-title">
+        <div data-repo-modal-panel class="modal-panel repo-detail-panel">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">Detailed view</p>
+                    <h2 id="repo-detail-title">Repository</h2>
+                </div>
+                <button id="repo-detail-close" class="modal-close" type="button" aria-label="Close repository details">x</button>
+            </div>
+
+            <div id="repo-detail-body"></div>
+        </div>
+    </div>
+
     <script type="module" src="assets/app.js"></script>
 </body>
 

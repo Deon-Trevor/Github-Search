@@ -19,6 +19,7 @@ import {
     renderState,
     setProfileActionsEnabled,
     setGlobalActionsEnabled,
+    renderRepoDetail,
 } from "./render.js";
 
 let activeRequest = 0;
@@ -166,7 +167,8 @@ async function runGlobalSearch() {
     try {
         const res = await API.search(type, q);
         if (requestId !== activeRequest) return;
-        renderGlobalResults(type, res.items || res || []);
+        state.globalResults = res.items || res || [];
+        renderGlobalResults(type, state.globalResults);
         setGlobalActionsEnabled(true);
     } catch (error) {
         if (requestId !== activeRequest) return;
@@ -206,9 +208,82 @@ async function openLabelModal(owner, repo) {
     }
 }
 
+async function openRepoLabels(owner, repo) {
+    const drawer = el.repoModalBody.querySelector("[data-repo-labels]");
+    if (!drawer || !owner || !repo) return openLabelModal(owner, repo);
+    drawer.classList.remove("hidden");
+    renderState(drawer, { kind: "loading", title: "Loading repository labels...", copy: `${owner}/${repo}` });
+
+    try {
+        const labels = await API.labels(owner, repo);
+        drawer.replaceChildren();
+        const header = document.createElement("div");
+        header.className = "repo-label-header";
+        const copy = document.createElement("div");
+        const kicker = document.createElement("p");
+        kicker.className = "eyebrow";
+        kicker.textContent = "Label intelligence";
+        const title = document.createElement("h3");
+        title.textContent = `${labels.length} labels`;
+        copy.append(kicker, title);
+        header.append(copy);
+        drawer.append(header);
+        const list = document.createElement("div");
+        list.className = "label-list";
+        drawer.append(list);
+        renderLabelList(labels, list);
+        drawer.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } catch {
+        renderState(drawer, { title: "Failed to load labels.", copy: "GitHub did not return label metadata for this repository." });
+    }
+}
+
 function closeLabelModal() {
     el.modalPanel.classList.remove("visible");
     setTimeout(() => el.modal.classList.add("hidden"), 150);
+}
+
+function allKnownRepos() {
+    return [...state.repos, ...state.filtered, ...state.globalResults].filter((item) => item?.name);
+}
+
+function findRepo(owner, repoName) {
+    return allKnownRepos().find((repo) => {
+        const repoOwner = repo.owner?.login || "";
+        return repo.name === repoName && (!owner || repoOwner === owner);
+    });
+}
+
+function openRepoDetail(owner, repoName) {
+    renderRepoDetail(findRepo(owner, repoName));
+    el.repoModal.classList.remove("hidden");
+    requestAnimationFrame(() => el.repoModalPanel.classList.add("visible"));
+}
+
+function closeRepoDetail() {
+    el.repoModalPanel.classList.remove("visible");
+    setTimeout(() => el.repoModal.classList.add("hidden"), 150);
+}
+
+function isInteractiveTarget(target) {
+    return Boolean(target.closest("button, a, input, select, textarea, summary, details"));
+}
+
+function runRowPrimaryAction(row) {
+    const action = row.dataset.primaryAction;
+    if (action === "scan-user" && row.dataset.login) {
+        el.username.value = row.dataset.login;
+        switchMode("profile");
+        scanProfile();
+        return;
+    }
+    if (action === "repo-detail") {
+        openRepoDetail(row.dataset.owner, row.dataset.repo);
+        return;
+    }
+    if (action === "open-url" && row.dataset.url) {
+        window.open(row.dataset.url, "_blank", "noopener,noreferrer");
+    }
 }
 
 function bindEvents() {
@@ -276,11 +351,20 @@ function bindEvents() {
     el.finderQuery.addEventListener("keydown", (e) => e.key === "Enter" && runUserFinder());
 
     document.addEventListener("click", (e) => {
+        if (el.authMenu?.open && !el.authMenu.contains(e.target)) {
+            el.authMenu.open = false;
+        }
+    });
+
+    document.addEventListener("click", (e) => {
         const btn = e.target.closest(".btn-use-user");
         if (!btn) return;
+        closeLabelModal();
+        closeRepoDetail();
         el.username.value = btn.dataset.login;
         switchMode("profile");
         scanProfile();
+        toast(`Pivoting to @${btn.dataset.login}`, "info");
     });
 
     el.btnGlobalSearch.addEventListener("click", runGlobalSearch);
@@ -319,15 +403,40 @@ function bindEvents() {
     document.addEventListener("click", (e) => {
         const btn = e.target.closest('.btn-action[data-action="labels"]');
         if (!btn) return;
+        if (btn.closest("#repo-modal")) {
+            openRepoLabels(btn.dataset.owner, btn.dataset.repo);
+            return;
+        }
         openLabelModal(btn.dataset.owner, btn.dataset.repo);
+    });
+
+    document.addEventListener("click", (e) => {
+        const row = e.target.closest(".result-row[data-primary-action]");
+        if (!row || isInteractiveTarget(e.target)) return;
+        runRowPrimaryAction(row);
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const row = e.target.closest?.(".result-row[data-primary-action]");
+        if (!row) return;
+        e.preventDefault();
+        runRowPrimaryAction(row);
     });
 
     el.modalClose.addEventListener("click", closeLabelModal);
     el.modal.addEventListener("click", (e) => {
         if (e.target === el.modal) closeLabelModal();
     });
+    el.repoModalClose.addEventListener("click", closeRepoDetail);
+    el.repoModal.addEventListener("click", (e) => {
+        if (e.target === el.repoModal) closeRepoDetail();
+    });
     document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && !el.modal.classList.contains("hidden")) closeLabelModal();
+        if (e.key !== "Escape") return;
+        if (el.authMenu?.open) el.authMenu.open = false;
+        if (!el.modal.classList.contains("hidden")) closeLabelModal();
+        if (!el.repoModal.classList.contains("hidden")) closeRepoDetail();
     });
 }
 
