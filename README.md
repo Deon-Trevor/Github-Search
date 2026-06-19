@@ -1,10 +1,51 @@
-# [Github Search](https://github.com/Deon-Trevor/Github-Api)
+# GitHub Explorer
 
-Simple OSINT tool to gather basic intel on a Github user's repositories 
+A browser-based GitHub investigation console for quickly pivoting between identities, profiles, repositories, labels, and global GitHub search results.
 
-<a href="https://github.com/Deon-Trevor/Github-Api">
+## What it does
 
-![](https://github.com/Deon-Trevor/Github-Stats/blob/master/generated/overview.svg)
-![](https://github.com/Deon-Trevor/Github-Stats/blob/master/generated/languages.svg)
+- Scan an exact GitHub username and review profile + repository metadata.
+- Search for users by real name, alias, or login fragment, then pivot into a profile scan.
+- Run global GitHub searches across repositories, users, code, commits, issues/PRs, and topics.
+- Inspect repository labels from profile and repository search results.
+- Copy deep links for profile/global searches.
+- Export scanned profile repositories as JSON or CSV.
+- Optionally add a GitHub token in the local UI for higher API limits or authenticated endpoints.
 
-</a>
+## Privacy model
+
+The app is static and runs in the browser. It does not store data on a backend. The optional GitHub token is read from the local input field and used only for requests made by the current browser session.
+
+## Run locally
+
+From the repository root:
+
+```bash
+python3 -m http.server 7777
+```
+
+Then open:
+
+```text
+http://[::1]:7777
+```
+
+A local server is required because the app uses ES modules from `assets/`.
+
+## Project structure
+
+```text
+index.html          Main application shell
+assets/app.js      Entry point
+assets/api.js      GitHub API wrapper
+assets/dom.js      DOM lookup helpers
+assets/events.js   UI controller and interaction handling
+assets/render.js   Safe DOM rendering helpers
+assets/state.js    Shared app state and query presets
+assets/styles.css  Threat-intel console visual system
+assets/utils.js    Small shared utilities
+```
+
+## Notes
+
+This is a frontend-only tool. GitHub API rate limits still apply, especially without a token. Some GitHub search endpoints may require authentication or narrower queries.
