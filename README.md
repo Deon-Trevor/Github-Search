@@ -2,6 +2,19 @@
 
 A browser-based GitHub investigation console for quickly pivoting between identities, profiles, repositories, labels, and global GitHub search results.
 
+<p align="center">
+  <a href="https://github.com/Deon-Trevor/Github-Search">
+    <img alt="GitHub Explorer repository stats" src="https://github-readme-stats.vercel.app/api/pin/?username=Deon-Trevor&repo=Github-Search&theme=github_dark&hide_border=true&title_color=39d5e8&icon_color=f7b84b&text_color=e7edf5&bg_color=06080c" />
+  </a>
+</p>
+
+<p align="center">
+  <img alt="Static frontend" src="https://img.shields.io/badge/runtime-static_frontend-39d5e8?style=for-the-badge&labelColor=06080c" />
+  <img alt="GitHub REST API" src="https://img.shields.io/badge/API-GitHub_REST-f7b84b?style=for-the-badge&labelColor=06080c" />
+  <img alt="Local token only" src="https://img.shields.io/badge/auth-local_session_only-5ee6a8?style=for-the-badge&labelColor=06080c" />
+  <img alt="No backend" src="https://img.shields.io/badge/backend-none-97a5b5?style=for-the-badge&labelColor=06080c" />
+</p>
+
 ## What it does
 
 - Scan an exact GitHub username and review profile + repository metadata.
