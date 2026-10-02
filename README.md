@@ -44,7 +44,7 @@ Each request is stateless. Tool results include GitHub JSON in `structuredConten
 
 ## Deploy
 
-The Cloudflare Pages project `github-search` is connected to `Deon-Trevor/Github-Search`. Its production branch is `main`, with automatic deployments enabled. The checked-in `wrangler.toml` was based on the project's downloaded configuration and sets the static output to `public`. It becomes the source of truth for Pages Function settings when deployed. Keep **Framework preset** as `None`, **Build command** blank, and **Root directory** blank in the dashboard. The `functions/` directory stays at the repository root, beside `public/`.
+The Cloudflare Pages project `github-search` is connected to `Deon-Trevor/Github-Search`. Its production branch is `main`, with automatic deployments enabled. Use **Framework preset** `None`, **Build command** `npm ci`, **Build output directory** `public`, and a blank **Root directory**. The checked-in `wrangler.toml` also names `public` as the static output. Pages must start at the repository root to find `functions/`; `npm ci` installs the dependencies needed to bundle the MCP endpoint.
 
 Push `main` to deploy:
 
