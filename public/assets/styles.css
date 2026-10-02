@@ -73,12 +73,22 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .auth-menu { position: relative; z-index: 30; }
 .auth-menu summary { min-height: 35px; display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--surface); padding: 7px 9px; font: 750 10px/1.2 var(--mono); cursor: pointer; list-style: none; white-space: nowrap; }
 .auth-menu summary:hover { background: var(--signal-dark); border-color: var(--signal-dark); }
+.auth-menu[data-token-state="entered"] summary, .auth-menu[data-token-state="checking"] summary { background: var(--signal-dark); border-color: var(--signal-dark); }
+.auth-menu[data-token-state="verified"] summary { background: #17604a; border-color: #17604a; }
+.auth-menu[data-token-state="rejected"] summary { background: #a92c22; border-color: #a92c22; }
 .auth-menu summary span { font-size: 16px; line-height: 0; }
 .auth-menu summary::-webkit-details-marker { display: none; }
 .auth-popover { position: absolute; top: calc(100% + 8px); right: 0; width: min(288px, calc(100vw - 28px)); border: 1px solid var(--ink); background: var(--surface); box-shadow: 8px 8px 0 var(--ink); padding: 13px; }
 .auth-menu label { display: block; margin: 0 0 7px; font: 750 11px var(--mono); }
 .auth-menu input { width: 100%; border: 1px solid var(--line-strong); border-radius: 0; background: white; padding: 10px; }
 .auth-menu p { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.auth-menu .token-status { margin-top: 10px; border-left: 3px solid var(--line-strong); padding: 5px 0 5px 8px; color: var(--ink); font: 700 11px/1.4 var(--mono); }
+.auth-menu[data-token-state="verified"] .token-status { border-color: #17604a; }
+.auth-menu[data-token-state="rejected"] .token-status { border-color: #a92c22; }
+.token-actions { display: flex; gap: 6px; margin-top: 10px; }
+.token-actions button { flex: 1; min-height: 33px; border: 1px solid var(--ink); border-radius: 0; background: var(--ink); color: var(--surface); padding: 6px; font: 700 10px/1.2 var(--mono); cursor: pointer; }
+.token-actions button:last-child { flex: 0 0 56px; background: var(--surface); color: var(--ink); }
+.token-actions button:disabled { opacity: .4; cursor: not-allowed; }
 .command-deck { margin-bottom: 64px; border: 1px solid var(--ink); background: var(--surface); box-shadow: 10px 10px 0 var(--ink); }
 .deck-heading { display: flex; justify-content: space-between; align-items: end; gap: 25px; padding: 20px 32px 18px; }
 .deck-heading h2 { margin: 5px 0 0; font: normal 33px/1.05 var(--display); letter-spacing: -.05em; }

@@ -25,11 +25,12 @@ import {
 let activeRequest = 0;
 let labelReturnFocus = null;
 let repoReturnFocus = null;
+let verifiedToken = "";
 
 function friendlyError(error, context = "request") {
     const message = error?.message || "GitHub request failed";
     if (/not found/i.test(message)) return "No exact GitHub user found. Try User Finder for aliases or punctuation variants.";
-    if (/rate limit/i.test(message)) return "GitHub rate limit hit. Add a token from Auth, then retry.";
+    if (/rate limit/i.test(message)) return "GitHub rate limit hit. Add a GitHub token, then retry.";
     if (/requires authentication|must be authenticated|validation failed/i.test(message)) {
         return `${context} needs a narrower query or authenticated GitHub token.`;
     }
@@ -46,6 +47,47 @@ function markBusy(button, busy, label) {
         button.textContent = button.dataset.idleLabel || button.textContent;
         button.disabled = false;
         delete button.dataset.idleLabel;
+    }
+}
+
+function showTokenState(kind, detail) {
+    const token = el.token.value.trim();
+    const labels = {
+        empty: "Add GitHub token",
+        entered: "Token entered",
+        checking: "Checking token",
+        verified: `Verified @${detail}`,
+        rejected: "Token rejected",
+        error: "Token unverified",
+    };
+    const messages = {
+        empty: "No personal token in this tab.",
+        entered: "Token entered in this tab. Verify it with GitHub to confirm it works.",
+        checking: "Checking this token with GitHub...",
+        verified: `GitHub accepted this token for @${detail}.`,
+        rejected: "GitHub rejected this token. Check it or enter another.",
+        error: detail,
+    };
+    el.authMenu.dataset.tokenState = kind;
+    el.tokenSummary.textContent = labels[kind];
+    el.tokenStatus.textContent = messages[kind];
+    el.tokenVerify.disabled = !token || kind === "checking";
+    el.tokenClear.disabled = !token;
+}
+
+async function verifyPersonalToken() {
+    const token = el.token.value.trim();
+    if (!token) return;
+    showTokenState("checking");
+    try {
+        const login = await API.verifyToken(token);
+        if (el.token.value.trim() !== token) return;
+        verifiedToken = token;
+        showTokenState("verified", login);
+    } catch (error) {
+        if (el.token.value.trim() !== token) return;
+        verifiedToken = "";
+        showTokenState(/rejected/i.test(error.message) ? "rejected" : "error", error.message);
     }
 }
 
@@ -316,6 +358,24 @@ function runRowPrimaryAction(row) {
 }
 
 function bindEvents() {
+    el.token.addEventListener("input", () => {
+        verifiedToken = "";
+        showTokenState(el.token.value.trim() ? "entered" : "empty");
+    });
+    el.authMenu.addEventListener("toggle", () => {
+        if (el.authMenu.open && el.token.value.trim() && el.token.value.trim() !== verifiedToken &&
+            ["empty", "verified"].includes(el.authMenu.dataset.tokenState)) {
+            verifiedToken = "";
+            showTokenState("entered");
+        }
+    });
+    el.tokenVerify.addEventListener("click", verifyPersonalToken);
+    el.tokenClear.addEventListener("click", () => {
+        el.token.value = "";
+        verifiedToken = "";
+        showTokenState("empty");
+        el.token.focus();
+    });
     el.modeTabs.forEach((btn) => btn.addEventListener("click", () => switchMode(btn.dataset.mode)));
 
     el.btnScan.addEventListener("click", scanProfile);
@@ -492,6 +552,7 @@ function initDeepLink() {
 export function init() {
     setTokenProvider(() => el.token.value.trim());
     onRateUpdate(updateRateDisplay);
+    showTokenState("empty");
     renderChips();
     resetProfileState();
     renderState(el.finderResults, {

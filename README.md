@@ -11,7 +11,7 @@ npm run dev
 
 Open `http://127.0.0.1:8788`. Node 20 or newer is required. Run `npm test` for the API and MCP contract checks.
 
-The browser app calls GitHub directly. A token entered in the access menu stays in that tab and is sent only to GitHub. API and MCP callers can send `X-GitHub-Token`; the Function forwards it to GitHub for that request and does not store it.
+Without a personal token, the browser app calls the site's REST API. If `GITHUB_TOKEN` is set on Cloudflare, the Function uses it for GitHub requests. A token entered in the browser stays in that tab and is sent directly to GitHub. Use **Verify with GitHub** to confirm it works and see which account it belongs to. API and MCP callers can send `X-GitHub-Token` to use their own token for a request instead of the site default.
 
 ## REST API
 
@@ -42,6 +42,12 @@ Connect a Streamable HTTP MCP client to `http://127.0.0.1:8788/mcp`, or to `http
 
 Each request is stateless. Tool results include GitHub JSON in `structuredContent.result` and as text. Clients that support custom headers can send `X-GitHub-Token` for their own rate limit allowance and authenticated search. The [main page](public/index.html#endpoints) has a short endpoint summary.
 
+## Optional site token
+
+In Cloudflare, open **Workers & Pages > github-search > Settings > Variables and Secrets > Add**. Create `GITHUB_TOKEN` as an encrypted **Secret** for Production. Deploy again after saving it. Set a separate Preview secret if previews need it. For local development, place `GITHUB_TOKEN="..."` in an untracked `.dev.vars` beside `wrangler.toml`; `.gitignore` excludes it.
+
+This token is used by public REST, MCP, and browser requests when the caller has no token. Anyone can spend its shared GitHub rate limit. Use a dedicated, read-only token with no access to private repositories or other sensitive data. Never use a token that can read private code here. A caller's `X-GitHub-Token` header takes precedence; a browser personal token goes directly to GitHub and is never sent to this site.
+
 ## Deploy
 
 The Cloudflare Pages project `github-search` is connected to `Deon-Trevor/Github-Search`. Its production branch is `main`, with automatic deployments enabled. Use **Framework preset** `None`, **Build command** `npm ci`, **Build output directory** `public`, and a blank **Root directory**. The checked-in `wrangler.toml` also names `public` as the static output. Pages must start at the repository root to find `functions/`; `npm ci` installs the dependencies needed to bundle the MCP endpoint.
@@ -54,7 +60,7 @@ git push origin main
 
 Cloudflare builds and deploys the static site and Pages Functions from that push. Check the deployment status in Cloudflare, then request `https://github.syncpundit.io/api/v1/health` and `https://github.syncpundit.io/mcp`. A local commit alone does not update the live site. Other branches can create preview deployments according to the project's branch controls.
 
-No server process, Docker image, deploy hook, or shared GitHub token is needed for this Pages deployment. GitHub's rate limits still apply to unauthenticated requests.
+No server process, Docker image, or deploy hook is needed for this Pages deployment. Without `GITHUB_TOKEN` or a caller token, GitHub's unauthenticated rate limits apply.
 
 ## Files
 

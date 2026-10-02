@@ -54,6 +54,10 @@ export const el = {
     // Token
     token: $("#github-token"),
     authMenu: $(".auth-menu"),
+    tokenSummary: $("#token-summary"),
+    tokenStatus: $("#token-status"),
+    tokenVerify: $("#token-verify"),
+    tokenClear: $("#token-clear"),
 
     // Modal
     modal: $("#label-modal"),

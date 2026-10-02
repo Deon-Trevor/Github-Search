@@ -2,13 +2,13 @@ import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
 import * as z from "zod/v4";
 import { githubRequest, tokenFrom } from "../lib/github.js";
 
-export function createHandler({ fetchImpl = fetch } = {}) {
+export function createHandler({ fetchImpl = fetch, defaultToken = "" } = {}) {
   return createMcpHandler(() => {
     const server = new McpServer({ name: "github-explorer", version: "1.0.0" });
     const tool = (name, description, inputSchema, operation) => {
       server.registerTool(name, { description, inputSchema }, async (args, ctx) => {
         try {
-          const token = tokenFrom(ctx.http?.req?.headers || new Headers());
+          const token = tokenFrom(ctx.http?.req?.headers || new Headers()) || defaultToken;
           const result = await githubRequest(operation, args, { token, fetchImpl });
           return {
             content: [{ type: "text", text: JSON.stringify(result.data) }],
@@ -36,9 +36,7 @@ export function createHandler({ fetchImpl = fetch } = {}) {
   });
 }
 
-const handler = createHandler();
-
-export function onRequest({ request }) {
+export function onRequest({ request, env }) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) {
     return new Response(JSON.stringify({ error: "Origin not allowed." }), {
@@ -46,5 +44,5 @@ export function onRequest({ request }) {
       headers: { "content-type": "application/json; charset=utf-8" },
     });
   }
-  return handler.fetch(request);
+  return createHandler({ defaultToken: env?.GITHUB_TOKEN || "" }).fetch(request);
 }

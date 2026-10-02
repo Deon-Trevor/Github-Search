@@ -32,14 +32,14 @@ function route(path, searchParams) {
   throw new RequestError(404, "API route not found.");
 }
 
-export async function handleApi(request, { fetchImpl = fetch } = {}) {
+export async function handleApi(request, { fetchImpl = fetch, defaultToken = "" } = {}) {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
   if (request.method !== "GET") return json(405, { error: "Method not allowed." }, { allow: "GET, OPTIONS" });
   try {
     const url = new URL(request.url);
     const target = route(url.pathname, url.searchParams);
     if (target.health) return json(200, { status: "ok" });
-    const token = tokenFrom(request.headers);
+    const token = tokenFrom(request.headers) || defaultToken;
     const result = await githubRequest(target.operation, target.args, { token, fetchImpl });
     return json(200, result.data, result.headers);
   } catch (error) {
@@ -48,6 +48,6 @@ export async function handleApi(request, { fetchImpl = fetch } = {}) {
   }
 }
 
-export function onRequest({ request }) {
-  return handleApi(request);
+export function onRequest({ request, env }) {
+  return handleApi(request, { defaultToken: env?.GITHUB_TOKEN || "" });
 }

@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { githubPath, RequestError } from "../lib/github.js";
-import { handleApi } from "../functions/api/[[path]].js";
+import { handleApi, onRequest as onApiRequest } from "../functions/api/[[path]].js";
 import { createHandler, onRequest as onMcpRequest } from "../functions/mcp.js";
+import { API, setTokenProvider } from "../public/assets/api.js";
 
 test("GitHub paths stay inside the supported lookup contract", () => {
   assert.equal(githubPath("search", { type: "repositories", q: "owner:Deon-Trevor", page: 2 }), "/search/repositories?q=owner%3ADeon-Trevor&per_page=20&page=2");
@@ -45,6 +46,69 @@ test("REST and MCP forward request tokens through the same GitHub lookup", async
   assert.equal(cors.headers.get("access-control-allow-origin"), "*");
   const blocked = await onMcpRequest({ request: new Request(`${base}/mcp`, { method: "POST", headers: { Origin: "https://evil.example" } }) });
   assert.equal(blocked.status, 403);
+});
+
+test("the server token is the default and a caller token takes precedence", async () => {
+  const sent = [];
+  const fetchImpl = async (_url, init) => {
+    sent.push(init.headers.Authorization);
+    return Response.json({ login: "octocat" });
+  };
+  const base = "https://github.syncpundit.io";
+  const api = request => handleApi(request, { fetchImpl, defaultToken: "server-token" });
+  await api(new Request(`${base}/api/v1/users/octocat`));
+  await api(new Request(`${base}/api/v1/users/octocat`, { headers: { "X-GitHub-Token": "caller-token" } }));
+  const mcp = createHandler({ fetchImpl, defaultToken: "server-token" });
+  await mcpCall(mcp, base, "tools/call", { name: "get_user", arguments: { login: "octocat" } });
+  await mcpCall(mcp, base, "tools/call", { name: "get_user", arguments: { login: "octocat" } }, { "X-GitHub-Token": "mcp-token" });
+  assert.deepEqual(sent, ["Bearer server-token", "Bearer caller-token", "Bearer server-token", "Bearer mcp-token"]);
+});
+
+test("Pages passes the configured secret into REST and MCP requests", async () => {
+  const originalFetch = globalThis.fetch;
+  const sent = [];
+  globalThis.fetch = async (_url, init) => {
+    sent.push(init.headers.Authorization);
+    return Response.json({ login: "octocat" });
+  };
+  try {
+    const base = "https://github.syncpundit.io";
+    const env = { GITHUB_TOKEN: "env-token" };
+    const api = await onApiRequest({ request: new Request(`${base}/api/v1/users/octocat`), env });
+    assert.equal(api.status, 200);
+    const mcp = { fetch: request => onMcpRequest({ request, env }) };
+    const result = await mcpCall(mcp, base, "tools/call", { name: "get_user", arguments: { login: "octocat" } });
+    assert.equal(result.result.structuredContent.result.login, "octocat");
+    assert.deepEqual(sent, ["Bearer env-token", "Bearer env-token"]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("browser requests use the site API until a personal token is entered", async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  let token = "";
+  setTokenProvider(() => token);
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url, headers: init.headers });
+    return Response.json({ login: "octocat" });
+  };
+  try {
+    await API.user("octocat");
+    assert.equal(calls[0].url, "/api/v1/users/octocat");
+    assert.equal(calls[0].headers.Authorization, undefined);
+    token = "personal-token";
+    await API.user("octocat");
+    assert.equal(calls[1].url, "https://api.github.com/users/octocat");
+    assert.equal(calls[1].headers.Authorization, "Bearer personal-token");
+    assert.equal(await API.verifyToken(token), "octocat");
+    assert.equal(calls[2].url, "https://api.github.com/user");
+    assert.equal(calls[2].headers.Authorization, "Bearer personal-token");
+  } finally {
+    globalThis.fetch = originalFetch;
+    setTokenProvider(() => "");
+  }
 });
 
 async function mcpCall(handler, base, method, params, extraHeaders = {}) {
