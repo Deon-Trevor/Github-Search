@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="G/H Explorer">
+  <rect width="64" height="64" rx="10" fill="#f4f1e9"/>
+  <text x="4" y="46" fill="#171b20" font-family="Arial Black, Arial, sans-serif" font-size="40" font-weight="900" letter-spacing="-3">G</text>
+  <path d="M35 11 25 53" fill="none" stroke="#d4472e" stroke-width="7" stroke-linecap="square"/>
+  <text x="34" y="46" fill="#171b20" font-family="Arial Black, Arial, sans-serif" font-size="40" font-weight="900" letter-spacing="-3">H</text>
+</svg>
