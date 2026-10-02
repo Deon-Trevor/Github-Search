@@ -25,7 +25,8 @@ import {
 let activeRequest = 0;
 let labelReturnFocus = null;
 let repoReturnFocus = null;
-let verifiedToken = "";
+let observedToken;
+let tokenWatch;
 
 function friendlyError(error, context = "request") {
     const message = error?.message || "GitHub request failed";
@@ -75,6 +76,13 @@ function showTokenState(kind, detail) {
     el.tokenClear.disabled = !token;
 }
 
+function syncTokenFromInput() {
+    const token = el.token.value.trim();
+    if (token === observedToken) return;
+    observedToken = token;
+    showTokenState(token ? "entered" : "empty");
+}
+
 async function verifyPersonalToken() {
     const token = el.token.value.trim();
     if (!token) return;
@@ -82,11 +90,9 @@ async function verifyPersonalToken() {
     try {
         const login = await API.verifyToken(token);
         if (el.token.value.trim() !== token) return;
-        verifiedToken = token;
         showTokenState("verified", login);
     } catch (error) {
         if (el.token.value.trim() !== token) return;
-        verifiedToken = "";
         showTokenState(/rejected/i.test(error.message) ? "rejected" : "error", error.message);
     }
 }
@@ -358,22 +364,18 @@ function runRowPrimaryAction(row) {
 }
 
 function bindEvents() {
-    el.token.addEventListener("input", () => {
-        verifiedToken = "";
-        showTokenState(el.token.value.trim() ? "entered" : "empty");
-    });
+    el.token.addEventListener("input", syncTokenFromInput);
+    el.token.addEventListener("change", syncTokenFromInput);
     el.authMenu.addEventListener("toggle", () => {
-        if (el.authMenu.open && el.token.value.trim() && el.token.value.trim() !== verifiedToken &&
-            ["empty", "verified"].includes(el.authMenu.dataset.tokenState)) {
-            verifiedToken = "";
-            showTokenState("entered");
-        }
+        clearInterval(tokenWatch);
+        if (!el.authMenu.open) return;
+        syncTokenFromInput();
+        tokenWatch = setInterval(syncTokenFromInput, 200);
     });
     el.tokenVerify.addEventListener("click", verifyPersonalToken);
     el.tokenClear.addEventListener("click", () => {
         el.token.value = "";
-        verifiedToken = "";
-        showTokenState("empty");
+        syncTokenFromInput();
         el.token.focus();
     });
     el.modeTabs.forEach((btn) => btn.addEventListener("click", () => switchMode(btn.dataset.mode)));
@@ -550,9 +552,12 @@ function initDeepLink() {
 }
 
 export function init() {
-    setTokenProvider(() => el.token.value.trim());
+    setTokenProvider(() => {
+        syncTokenFromInput();
+        return el.token.value.trim();
+    });
     onRateUpdate(updateRateDisplay);
-    showTokenState("empty");
+    syncTokenFromInput();
     renderChips();
     resetProfileState();
     renderState(el.finderResults, {
