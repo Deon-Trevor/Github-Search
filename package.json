@@ -1,0 +1,20 @@
+{
+  "name": "github-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --port 8788",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.2.0",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

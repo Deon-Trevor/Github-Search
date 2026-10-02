@@ -4,59 +4,66 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GitHub Explorer • Sync_Pundit</title>
-    <meta name="description" content="Fast browser-based GitHub investigation console for profiles, users, repositories, issues, code and topics." />
+    <title>GitHub Explorer - Follow the trail</title>
+    <meta name="description" content="Explore GitHub profiles, repositories, users, labels, code, and issues in one research workspace." />
+    <meta name="theme-color" content="#f4f1e9" />
     <meta name="keywords" content="OSINT, GitHub, Sync_Pundit, Deon Trevor Mpofu, syncpundit" />
     <meta name="author" content="Sync_Pundit" />
     <link rel="icon" href="assets/github-mark.svg" />
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="assets/styles.css" />
 </head>
 
-<body class="app-bg min-h-screen text-stone-100">
-    <div class="noise-layer"></div>
+<body class="app-bg">
     <main class="workspace-shell">
+        <nav class="site-nav" aria-label="Main navigation">
+            <a class="site-brand" href="./" aria-label="GitHub Explorer home"><span class="brand-symbol">G<span class="brand-signal">/</span>H</span><span class="brand-word">Explorer</span></a>
+            <div class="site-links">
+                <a class="site-link active" href="./">Workspace</a>
+                <a class="site-link" href="#endpoints">API &amp; MCP</a>
+                <a class="site-link external" href="https://github.com/Deon-Trevor/Github-Search" target="_blank" rel="noreferrer noopener">Source <span aria-hidden="true">↗</span></a>
+            </div>
+        </nav>
+
         <header id="app-header" class="app-header">
             <div class="brand-lockup">
-                <div class="brand-mark" aria-hidden="true">
-                    <img src="assets/github-mark-white.svg" alt="" />
-                </div>
                 <div>
-                    <p class="eyebrow">Investigation console</p>
-                    <h1>GitHub Explorer <span>by Sync_Pundit</span></h1>
-                    <p class="header-copy">Pivot from names to users, repos, labels and global GitHub search without losing context.</p>
+                    <p class="eyebrow hero-eyebrow"><span class="signal-dot" aria-hidden="true"></span> Open source intelligence / 01</p>
+                    <h1>Follow the trail <em>through GitHub.</em></h1>
+                    <p class="header-copy">From a name to a profile. From a repository to its owner. Search the public record, keep your bearings, and open the details that matter.</p>
                 </div>
             </div>
 
             <div class="header-actions">
-                <span class="badge-green">Local only</span>
-                <button id="rate-pill" class="badge-rate" type="button" title="GitHub API rate limit. Add a token if this gets low.">
-                    API <span id="rate-remaining" class="font-mono">-</span>
-                </button>
+                <div class="hero-seal" aria-hidden="true"><span>RESEARCH<br>THE PUBLIC<br>RECORD</span><b>◎</b></div>
+                <div class="connection-row">
+                <div id="rate-meter" class="rate-meter rate-pending" role="status" aria-live="polite"><span class="rate-label">GitHub API calls left</span><strong id="rate-remaining">After first lookup</strong><span class="rate-track" aria-hidden="true"><span id="rate-fill"></span></span></div>
                 <details class="auth-menu">
-                    <summary>Auth</summary>
-                    <label for="github-token">GitHub token</label>
-                    <input id="github-token" type="password" placeholder="ghp_... optional" autocomplete="off" />
-                    <p>Stored only in this browser session. Use it for higher limits or endpoints that require auth.</p>
-                </details>
+                    <summary>Set GitHub token <span aria-hidden="true">+</span></summary>
+                    <div class="auth-popover">
+                        <label for="github-token">GitHub token</label>
+                        <input id="github-token" type="password" placeholder="Paste a token (optional)" autocomplete="off" />
+                        <p>Kept in this tab. Sent only to GitHub for requests you make here.</p>
+                    </div>
+                </details></div>
             </div>
         </header>
 
         <section class="command-deck" aria-label="Search controls">
-            <div class="mode-tabs" role="tablist" aria-label="Search mode">
-                <button data-mode="profile" class="mode-tab active" type="button">Profile</button>
-                <button data-mode="userfinder" class="mode-tab" type="button">Find Users</button>
-                <button data-mode="global" class="mode-tab" type="button">Global Search</button>
+            <div class="deck-heading"><div><span class="deck-number">01 / EXPLORE</span><h2>Investigation workspace</h2></div><p>Choose a starting point. Every result is a way forward.</p></div>
+            <div class="mode-tabs" role="group" aria-label="Search mode">
+                <button data-mode="profile" class="mode-tab active" type="button" aria-pressed="true"><span class="tab-index">01</span> Profile scan</button>
+                <button data-mode="userfinder" class="mode-tab" type="button" aria-pressed="false"><span class="tab-index">02</span> Find people</button>
+                <button data-mode="global" class="mode-tab" type="button" aria-pressed="false"><span class="tab-index">03</span> Search GitHub</button>
             </div>
 
             <div id="error-banner" class="error-banner hidden" role="alert"></div>
             <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-            <section id="panel-profile" class="panel active-panel" aria-labelledby="profile-heading">
+            <section id="panel-profile" class="panel active-panel" aria-label="Profile scan">
                 <div class="command-grid profile-command-grid">
                     <div class="field-stack command-primary">
                         <label class="input-label" for="profile-username">Exact GitHub username</label>
-                        <input id="profile-username" class="input-text command-input" placeholder="Deon-Trevor, torvalds, vercel" />
+                        <input id="profile-username" class="input-text command-input" placeholder="e.g. Deon-Trevor" autocomplete="off" spellcheck="false" />
                     </div>
                     <div class="field-stack">
                         <label class="input-label" for="profile-sort">Sort repos</label>
@@ -71,7 +78,7 @@
                         <input id="profile-filter" class="input-text" placeholder="name, language, description" />
                     </div>
                     <div class="command-actions">
-                        <button id="btn-scan" class="btn-primary" type="button">Scan Profile</button>
+                        <button id="btn-scan" class="btn-primary" type="button">Scan profile <span aria-hidden="true">↗</span></button>
                         <button id="btn-clear" class="btn-secondary" type="button">Reset</button>
                     </div>
                 </div>
@@ -113,7 +120,7 @@
                         <input id="finder-query" class="input-text command-input" placeholder="Deon Trevor Mpofu, Sync_Pundit, SyncPundit" />
                     </div>
                     <div class="command-actions">
-                        <button id="btn-finder-search" class="btn-primary" type="button">Find Users</button>
+                        <button id="btn-finder-search" class="btn-primary" type="button">Find people <span aria-hidden="true">↗</span></button>
                     </div>
                 </div>
                 <section class="results-panel single-panel" aria-labelledby="finder-heading">
@@ -146,7 +153,7 @@
                         </select>
                     </div>
                     <div class="command-actions">
-                        <button id="btn-global-search" class="btn-primary" type="button">Run Search</button>
+                        <button id="btn-global-search" class="btn-primary" type="button">Search GitHub <span aria-hidden="true">↗</span></button>
                         <button id="btn-copy-global-url" class="btn-secondary" type="button" disabled>Copy Link</button>
                     </div>
                 </div>
@@ -174,6 +181,40 @@
                 </section>
             </section>
         </section>
+        <section class="endpoint-section" id="endpoints" aria-labelledby="endpoints-heading">
+            <div class="endpoint-intro">
+                <div>
+                    <p class="eyebrow">For developers / 02</p>
+                    <h2 id="endpoints-heading">Use it without the browser.</h2>
+                </div>
+                <p>Use the same GitHub lookups as JSON or MCP tools. They run with this site on Cloudflare Pages.</p>
+            </div>
+            <div class="endpoint-grid">
+                <div class="endpoint-block">
+                    <h3>Profiles</h3>
+                    <code><span>GET</span> /api/v1/users/:login</code>
+                    <code><span>GET</span> /api/v1/users/:login/repos</code>
+                    <p>Read an exact profile or list its public repositories.</p>
+                </div>
+                <div class="endpoint-block">
+                    <h3>Search</h3>
+                    <code><span>GET</span> /api/v1/search?type=&amp;q=</code>
+                    <p>Search repositories, users, code, commits, issues, or topics. Add <code>page</code> and <code>per_page</code> to paginate.</p>
+                </div>
+                <div class="endpoint-block">
+                    <h3>Labels</h3>
+                    <code><span>GET</span> /api/v1/repos/:owner/:repo/labels</code>
+                    <p>Read the labels attached to a repository.</p>
+                </div>
+                <div class="endpoint-block">
+                    <h3>MCP</h3>
+                    <code><span>POST</span> /mcp</code>
+                    <p>Streamable HTTP tools: <code>get_user</code>, <code>list_user_repos</code>, <code>search_github</code>, and <code>list_repo_labels</code>.</p>
+                </div>
+            </div>
+            <p class="endpoint-note">No app key. Send <code>X-GitHub-Token</code> if you need your own GitHub allowance or authenticated search. GitHub rate limits still apply. <a href="https://github.com/Deon-Trevor/Github-Search#rest-api" target="_blank" rel="noreferrer noopener">Setup and examples in the README ↗</a></p>
+        </section>
+        <footer class="site-footer"><span>GitHub Explorer <i>by Sync_Pundit</i></span><a href="#endpoints">API &amp; MCP <span aria-hidden="true">↑</span></a></footer>
     </main>
 
     <div id="label-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="label-modal-title">
@@ -186,7 +227,8 @@
                 <button id="label-close" class="modal-close" type="button" aria-label="Close labels modal">x</button>
             </div>
 
-            <input id="label-filter" class="label-filter" placeholder="Filter labels..." />
+            <label class="input-label" for="label-filter">Filter labels</label>
+            <input id="label-filter" class="label-filter" placeholder="Start typing a label" />
             <div id="label-list" class="label-list"></div>
         </div>
     </div>

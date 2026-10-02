@@ -17,7 +17,8 @@ export const el = {
 
     // Rate
     rateRemaining: $("#rate-remaining"),
-    ratePill: $("#rate-pill"),
+    rateMeter: $("#rate-meter"),
+    rateFill: $("#rate-fill"),
 
     // Profile panel
     username: $("#profile-username"),
@@ -46,6 +47,7 @@ export const el = {
     btnGlobalSearch: $("#btn-global-search"),
     btnCopyGlobalURL: $("#btn-copy-global-url"),
     globalResults: $("#global-results"),
+    globalHeading: $("#global-heading"),
     presetChips: $("#preset-chips"),
     builderChips: $("#builder-chips"),
 

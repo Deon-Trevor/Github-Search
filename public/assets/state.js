@@ -18,7 +18,7 @@ export const state = {
 
 export const PRESETS = [
     { label: "Most starred", query: "stars:>1000", kind: "repositories" },
-    { label: "Created this year", query: "created:>2026-01-01", kind: "repositories" },
+    { label: "Created this year", query: `created:>${new Date().getFullYear()}-01-01`, kind: "repositories" },
     { label: "Open issues", query: "is:open is:issue", kind: "issues" },
     { label: "Organizations", query: "type:org", kind: "users" },
 ];

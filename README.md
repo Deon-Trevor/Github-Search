@@ -1,64 +1,65 @@
 # GitHub Explorer
 
-A browser-based GitHub investigation console for quickly pivoting between identities, profiles, repositories, labels, and global GitHub search results.
-
-<p align="center">
-  <a href="https://github.com/Deon-Trevor/Github-Search">
-    <img alt="GitHub Explorer repository stats" src="https://github-readme-stats.vercel.app/api/pin/?username=Deon-Trevor&repo=Github-Search&theme=github_dark&hide_border=true&title_color=39d5e8&icon_color=f7b84b&text_color=e7edf5&bg_color=06080c" />
-  </a>
-</p>
-
-<p align="center">
-  <img alt="Static frontend" src="https://img.shields.io/badge/runtime-static_frontend-39d5e8?style=for-the-badge&labelColor=06080c" />
-  <img alt="GitHub REST API" src="https://img.shields.io/badge/API-GitHub_REST-f7b84b?style=for-the-badge&labelColor=06080c" />
-  <img alt="Local token only" src="https://img.shields.io/badge/auth-local_session_only-5ee6a8?style=for-the-badge&labelColor=06080c" />
-  <img alt="No backend" src="https://img.shields.io/badge/backend-none-97a5b5?style=for-the-badge&labelColor=06080c" />
-</p>
-
-## What it does
-
-- Scan an exact GitHub username and review profile + repository metadata.
-- Search for users by real name, alias, or login fragment, then pivot into a profile scan.
-- Run global GitHub searches across repositories, users, code, commits, issues/PRs, and topics.
-- Inspect repository labels from profile and repository search results.
-- Copy deep links for profile/global searches.
-- Export scanned profile repositories as JSON or CSV.
-- Optionally add a GitHub token in the local UI for higher API limits or authenticated endpoints.
-
-## Privacy model
-
-The app is static and runs in the browser. It does not store data on a backend. The optional GitHub token is read from the local input field and used only for requests made by the current browser session.
+A GitHub research workspace for profiles, repositories, labels, and global search. The browser app is served as static files; the REST API and MCP endpoint run as Cloudflare Pages Functions.
 
 ## Run locally
 
-From the repository root:
+```bash
+npm ci
+npm run dev
+```
+
+Open `http://127.0.0.1:8788`. Node 20 or newer is required. Run `npm test` for the API and MCP contract checks.
+
+The browser app calls GitHub directly. A token entered in the access menu stays in that tab and is sent only to GitHub. API and MCP callers can send `X-GitHub-Token`; the Function forwards it to GitHub for that request and does not store it.
+
+## REST API
+
+| Route | Result |
+| --- | --- |
+| `GET /api/v1/health` | Health check |
+| `GET /api/v1/users/:login` | Exact profile |
+| `GET /api/v1/users/:login/repos` | User repositories |
+| `GET /api/v1/repos/:owner/:repo/labels` | Repository labels |
+| `GET /api/v1/search?type=&q=` | Global search |
+
+Search types: `repositories`, `users`, `code`, `commits`, `issues`, `topics`. Search accepts `page` (1-10) and `per_page` (1-100). Repository and label lists accept `page` (1-100) and `per_page` (1-100). Defaults are 20 search results, 30 repositories, and 100 labels.
+
+Successful responses keep GitHub's JSON shape. GitHub errors return their status and a JSON `error` message. Rate limit and pagination headers are forwarded. Results are not cached.
 
 ```bash
-python3 -m http.server 7777
+curl 'http://127.0.0.1:8788/api/v1/search?type=repositories&q=language:go&per_page=20'
 ```
 
-Then open:
+## MCP
 
-```text
-http://[::1]:7777
+Connect a Streamable HTTP MCP client to `http://127.0.0.1:8788/mcp`, or to `https://github.syncpundit.io/mcp` after deployment. The endpoint offers four tools:
+
+- `get_user(login)`
+- `list_user_repos(login, page?, per_page?)`
+- `search_github(type, q, page?, per_page?)`
+- `list_repo_labels(owner, repo, page?, per_page?)`
+
+Each request is stateless. Tool results include GitHub JSON in `structuredContent.result` and as text. Clients that support custom headers can send `X-GitHub-Token` for their own rate limit allowance and authenticated search. The [main page](public/index.html#endpoints) has a short endpoint summary.
+
+## Deploy
+
+The Cloudflare Pages project `github-search` is connected to `Deon-Trevor/Github-Search`. Its production branch is `main`, with automatic deployments enabled. The checked-in `wrangler.toml` was based on the project's downloaded configuration and sets the static output to `public`. It becomes the source of truth for Pages Function settings when deployed. Keep **Framework preset** as `None`, **Build command** blank, and **Root directory** blank in the dashboard. The `functions/` directory stays at the repository root, beside `public/`.
+
+Push `main` to deploy:
+
+```bash
+git push origin main
 ```
 
-A local server is required because the app uses ES modules from `assets/`.
+Cloudflare builds and deploys the static site and Pages Functions from that push. Check the deployment status in Cloudflare, then request `https://github.syncpundit.io/api/v1/health` and `https://github.syncpundit.io/mcp`. A local commit alone does not update the live site. Other branches can create preview deployments according to the project's branch controls.
 
-## Project structure
+No server process, Docker image, deploy hook, or shared GitHub token is needed for this Pages deployment. GitHub's rate limits still apply to unauthenticated requests.
 
-```text
-index.html          Main application shell
-assets/app.js      Entry point
-assets/api.js      GitHub API wrapper
-assets/dom.js      DOM lookup helpers
-assets/events.js   UI controller and interaction handling
-assets/render.js   Safe DOM rendering helpers
-assets/state.js    Shared app state and query presets
-assets/styles.css  Threat-intel console visual system
-assets/utils.js    Small shared utilities
-```
+## Files
 
-## Notes
-
-This is a frontend-only tool. GitHub API rate limits still apply, especially without a token. Some GitHub search endpoints may require authentication or narrower queries.
+- `public/`: browser app and static assets
+- `functions/api/[[path]].js`: REST routes
+- `functions/mcp.js`: Streamable HTTP MCP endpoint
+- `lib/github.js`: shared GitHub request validation and forwarding
+- `test/`: API and MCP contract checks

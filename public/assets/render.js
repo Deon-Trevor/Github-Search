@@ -62,8 +62,6 @@ function metaPill(value) {
 function resultShell(kind) {
     const article = document.createElement("article");
     article.className = `result-row result-${kind}`;
-    article.tabIndex = 0;
-    article.setAttribute("role", "button");
     return article;
 }
 
@@ -91,17 +89,20 @@ export function setError(msg) {
 
 export function updateRateDisplay(remaining, limit) {
     if (remaining === null || remaining === undefined || !limit) {
-        el.rateRemaining.textContent = "-";
-        el.ratePill.title = "No GitHub rate-limit data yet.";
+        el.rateRemaining.textContent = "After first lookup";
+        el.rateMeter.title = "GitHub rate limit appears after your first request.";
+        el.rateMeter.classList.add("rate-pending");
+        el.rateFill.style.width = "0%";
         return;
     }
-    el.rateRemaining.textContent = `${remaining}/${limit}`;
-    el.ratePill.title = `GitHub API remaining: ${remaining} of ${limit}`;
-    el.ratePill.classList.remove("rate-green", "rate-yellow", "rate-red");
+    el.rateRemaining.textContent = `${remaining} / ${limit}`;
+    el.rateMeter.title = `GitHub API calls remaining: ${remaining} of ${limit}`;
+    el.rateMeter.classList.remove("rate-pending", "rate-green", "rate-yellow", "rate-red");
     const pct = Number(remaining) / Number(limit);
-    if (pct > 0.5) el.ratePill.classList.add("rate-green");
-    else if (pct > 0.2) el.ratePill.classList.add("rate-yellow");
-    else el.ratePill.classList.add("rate-red");
+    el.rateFill.style.width = `${Math.max(0, Math.min(100, pct * 100))}%`;
+    if (pct > 0.5) el.rateMeter.classList.add("rate-green");
+    else if (pct > 0.2) el.rateMeter.classList.add("rate-yellow");
+    else el.rateMeter.classList.add("rate-red");
 }
 
 export function renderState(target, { kind = "empty", title, copy, kicker }) {
@@ -163,7 +164,10 @@ export function repoCardNode(repo, { titleOverride, showWatchers = false } = {})
 
     const main = document.createElement("div");
     main.className = "result-main";
-    main.append(text("h3", "result-title", title));
+    const heading = document.createElement("h3");
+    heading.className = "result-title";
+    heading.append(button(title, "repo-title-button", { action: "repo-detail", owner, repo: name }));
+    main.append(heading);
     if (repo.description) main.append(text("p", "result-desc", repo.description));
 
     const meta = document.createElement("div");
@@ -282,6 +286,7 @@ export function renderIssueNode(item) {
 
 export function renderGlobalResults(kind, items) {
     clear(el.globalResults);
+    el.globalHeading.textContent = `${items.length} results on this page`;
     if (!items.length) {
         renderState(el.globalResults, {
             title: "No results found.",

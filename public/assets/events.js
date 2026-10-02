@@ -23,6 +23,8 @@ import {
 } from "./render.js";
 
 let activeRequest = 0;
+let labelReturnFocus = null;
+let repoReturnFocus = null;
 
 function friendlyError(error, context = "request") {
     const message = error?.message || "GitHub request failed";
@@ -72,7 +74,7 @@ function switchMode(mode) {
     el.modeTabs.forEach((btn) => {
         const active = btn.dataset.mode === mode;
         btn.classList.toggle("active", active);
-        btn.setAttribute("aria-selected", active ? "true" : "false");
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
     setError("");
 }
@@ -189,9 +191,11 @@ function insertToken(token) {
 
 async function openLabelModal(owner, repo) {
     if (!owner || !repo) return;
+    labelReturnFocus = document.activeElement;
     renderState(el.modalList, { kind: "loading", title: "Loading labels...", copy: `${owner}/${repo}` });
     el.modal.classList.remove("hidden");
     requestAnimationFrame(() => el.modalPanel.classList.add("visible"));
+    el.modalFilter.focus();
 
     try {
         const labels = await API.labels(owner, repo);
@@ -241,6 +245,8 @@ async function openRepoLabels(owner, repo) {
 function closeLabelModal() {
     el.modalPanel.classList.remove("visible");
     setTimeout(() => el.modal.classList.add("hidden"), 150);
+    if (labelReturnFocus?.isConnected && !labelReturnFocus.closest(".hidden")) labelReturnFocus.focus();
+    labelReturnFocus = null;
 }
 
 function allKnownRepos() {
@@ -255,14 +261,37 @@ function findRepo(owner, repoName) {
 }
 
 function openRepoDetail(owner, repoName) {
+    repoReturnFocus = document.activeElement;
     renderRepoDetail(findRepo(owner, repoName));
     el.repoModal.classList.remove("hidden");
     requestAnimationFrame(() => el.repoModalPanel.classList.add("visible"));
+    el.repoModalClose.focus();
 }
 
 function closeRepoDetail() {
     el.repoModalPanel.classList.remove("visible");
     setTimeout(() => el.repoModal.classList.add("hidden"), 150);
+    if (repoReturnFocus?.isConnected && !repoReturnFocus.closest(".hidden")) repoReturnFocus.focus();
+    repoReturnFocus = null;
+}
+
+function trapModalFocus(event) {
+    if (event.key !== "Tab") return;
+    const modal = !el.repoModal.classList.contains("hidden") ? el.repoModal
+        : !el.modal.classList.contains("hidden") ? el.modal : null;
+    if (!modal) return;
+    const focusable = [...modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled])')]
+        .filter(node => node.getClientRects().length);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
 }
 
 function isInteractiveTarget(target) {
@@ -293,8 +322,13 @@ function bindEvents() {
     el.username.addEventListener("keydown", (e) => e.key === "Enter" && scanProfile());
 
     el.btnClear.addEventListener("click", () => {
+        ++activeRequest;
+        clearTimeout(applyFilters._t);
         el.username.value = "";
         el.filter.value = "";
+        el.sort.value = "updated";
+        setURL("user", null);
+        markBusy(el.btnScan, false);
         resetProfileState();
         setError("");
     });
@@ -401,6 +435,11 @@ function bindEvents() {
     });
 
     document.addEventListener("click", (e) => {
+        const btn = e.target.closest('.repo-title-button[data-action="repo-detail"]');
+        if (btn) openRepoDetail(btn.dataset.owner, btn.dataset.repo);
+    });
+
+    document.addEventListener("click", (e) => {
         const btn = e.target.closest('.btn-action[data-action="labels"]');
         if (!btn) return;
         if (btn.closest("#repo-modal")) {
@@ -413,14 +452,6 @@ function bindEvents() {
     document.addEventListener("click", (e) => {
         const row = e.target.closest(".result-row[data-primary-action]");
         if (!row || isInteractiveTarget(e.target)) return;
-        runRowPrimaryAction(row);
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        const row = e.target.closest?.(".result-row[data-primary-action]");
-        if (!row) return;
-        e.preventDefault();
         runRowPrimaryAction(row);
     });
 
@@ -438,6 +469,7 @@ function bindEvents() {
         if (!el.modal.classList.contains("hidden")) closeLabelModal();
         if (!el.repoModal.classList.contains("hidden")) closeRepoDetail();
     });
+    document.addEventListener("keydown", trapModalFocus);
 }
 
 function initDeepLink() {
@@ -462,6 +494,14 @@ export function init() {
     onRateUpdate(updateRateDisplay);
     renderChips();
     resetProfileState();
+    renderState(el.finderResults, {
+        title: "Start with a name or alias.",
+        copy: "Search for a person or organization, then open an exact profile from the results.",
+    });
+    renderState(el.globalResults, {
+        title: "Search the public record.",
+        copy: "Choose a result type, write a GitHub query, or start with a preset.",
+    });
     bindEvents();
     initDeepLink();
 }
