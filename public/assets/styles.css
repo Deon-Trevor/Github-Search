@@ -166,6 +166,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .chip-row { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip { border: 1px solid var(--line-strong); border-radius: 99px; background: var(--surface); color: var(--ink-soft); padding: 7px 10px; font: 650 10px var(--mono); }
 .chip:hover { border-color: var(--signal); color: var(--signal-dark); }
+.query-hint { grid-column: 1 / -1; margin: 0; color: var(--signal-dark); font: 700 11px/1.4 var(--mono); }
+.query-hint:empty { display: none; }
 .raw-json { max-height: 180px; overflow: auto; white-space: pre-wrap; color: var(--muted); font: 10px/1.5 var(--mono); }
 .error-banner { margin: 18px 32px 0; border: 1px solid var(--signal); background: #fcedea; color: var(--signal-dark); padding: 12px 14px; font-size: 13px; font-weight: 700; }
 .hidden { display: none !important; }

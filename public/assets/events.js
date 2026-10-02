@@ -41,7 +41,7 @@ function friendlyError(error, context = "request") {
 function markBusy(button, busy, label) {
     if (!button) return;
     if (busy) {
-        button.dataset.idleLabel = button.textContent;
+        if (!button.dataset.idleLabel) button.dataset.idleLabel = button.textContent;
         button.textContent = label || "Working...";
         button.disabled = true;
     } else {
@@ -203,7 +203,17 @@ async function runUserFinder() {
 async function runGlobalSearch() {
     const q = el.globalQ.value.trim();
     if (!q) return setError("Enter a GitHub search query.");
+    const unfinished = /(?:^|\s)(language:|stars:>)(?=\s|$)/.exec(q);
+    if (unfinished) {
+        el.queryHint.textContent = `Add a value after ${unfinished[1]}, then press Enter to search.`;
+        return;
+    }
+    if (/^in:(?:name|description)$/.test(q)) {
+        el.queryHint.textContent = "Add a search term, then press Enter to search.";
+        return;
+    }
 
+    el.queryHint.textContent = "";
     const requestId = ++activeRequest;
     const type = el.globalKind.value;
     setError("");
@@ -230,11 +240,20 @@ async function runGlobalSearch() {
 }
 
 function insertToken(token) {
-    const current = el.globalQ.value;
-    const sep = current && !current.endsWith(" ") ? " " : "";
-    el.globalQ.value = current + sep + token;
+    const current = el.globalQ.value.trim();
+    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const existing = new RegExp(`(^|\\s)${escaped}([^\\s]*)`).exec(current);
+    if (existing) {
+        const start = existing.index + existing[1].length + token.length;
+        el.globalQ.value = current;
+        el.globalQ.focus();
+        el.globalQ.setSelectionRange(start, start + existing[2].length);
+        return false;
+    }
+    el.globalQ.value = [current, token].filter(Boolean).join(" ");
     el.globalQ.focus();
     el.globalQ.setSelectionRange(el.globalQ.value.length, el.globalQ.value.length);
+    return true;
 }
 
 async function openLabelModal(owner, repo) {
@@ -465,20 +484,43 @@ function bindEvents() {
 
     el.btnGlobalSearch.addEventListener("click", runGlobalSearch);
     el.globalQ.addEventListener("keydown", (e) => e.key === "Enter" && runGlobalSearch());
+    el.globalQ.addEventListener("input", () => {
+        el.queryHint.textContent = "Press Enter to search with the updated query.";
+    });
 
     el.presetChips?.addEventListener("click", (e) => {
         const btn = e.target.closest("[data-preset]");
         if (!btn) return;
         const preset = PRESETS[Number(btn.dataset.preset)];
-        el.globalQ.value = preset.query;
-        if (preset.kind) el.globalKind.value = preset.kind;
-        el.globalQ.focus();
+        if (preset.kind && preset.kind !== el.globalKind.value) {
+            el.globalQ.value = preset.query;
+            el.globalKind.value = preset.kind;
+        } else {
+            if (!insertToken(preset.query)) return;
+        }
+        runGlobalSearch();
     });
 
     el.builderChips?.addEventListener("click", (e) => {
         const btn = e.target.closest("[data-token]");
         if (!btn) return;
-        insertToken(BUILDER_TOKENS[Number(btn.dataset.token)].token);
+        const token = BUILDER_TOKENS[Number(btn.dataset.token)].token;
+        const hadQuery = Boolean(el.globalQ.value.trim());
+        if (!hadQuery && token.startsWith("in:")) {
+            el.globalQ.value = `${token} `;
+            el.globalQ.focus();
+            el.queryHint.textContent = "Add a search term, then press Enter to search.";
+            return;
+        }
+        if (!insertToken(token)) {
+            el.queryHint.textContent = "That filter is already in the query. Edit its value, then press Enter to search.";
+            return;
+        }
+        if (["language:", "stars:>"].includes(token)) {
+            el.queryHint.textContent = `Add a value after ${token}, then press Enter to search.`;
+            return;
+        }
+        runGlobalSearch();
     });
 
     el.btnCopyProfileURL.addEventListener("click", () => {

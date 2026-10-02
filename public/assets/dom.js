@@ -50,6 +50,7 @@ export const el = {
     globalHeading: $("#global-heading"),
     presetChips: $("#preset-chips"),
     builderChips: $("#builder-chips"),
+    queryHint: $("#query-hint"),
 
     // Token
     token: $("#github-token"),
