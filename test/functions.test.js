@@ -7,9 +7,15 @@ import { API, setTokenProvider } from "../public/assets/api.js";
 
 test("GitHub paths stay inside the supported lookup contract", () => {
   assert.equal(githubPath("search", { type: "repositories", q: "owner:Deon-Trevor", page: 2 }), "/search/repositories?q=owner%3ADeon-Trevor&per_page=20&page=2");
+  assert.equal(githubPath("repos", { login: "octocat" }), "/users/octocat/repos?per_page=30&page=1&sort=updated");
+  assert.equal(githubPath("search", { type: "users", q: "syncpundit", sort: "joined", order: "desc" }), "/search/users?q=syncpundit&per_page=20&page=1&sort=joined&order=desc");
+  assert.equal(githubPath("repos", { login: "octocat", sort: "pushed" }), "/users/octocat/repos?per_page=30&page=1&sort=pushed");
+  assert.equal(githubPath("orgRepos", { login: "github", sort: "pushed" }), "/orgs/github/repos?per_page=30&page=1&sort=pushed&type=public");
   assert.throws(() => githubPath("user", { login: "../admin" }), RequestError);
   assert.throws(() => githubPath("search", { type: "bogus", q: "x" }), RequestError);
   assert.throws(() => githubPath("search", { type: "code", q: "x", page: 11 }), RequestError);
+  assert.throws(() => githubPath("search", { type: "users", q: "x", order: "newest" }), RequestError);
+  assert.throws(() => githubPath("repos", { login: "octocat", sort: "joined" }), RequestError);
 });
 
 test("REST and MCP forward request tokens through the same GitHub lookup", async () => {
@@ -31,7 +37,7 @@ test("REST and MCP forward request tokens through the same GitHub lookup", async
 
   const mcp = createHandler({ fetchImpl });
   const list = await mcpCall(mcp, base, "tools/list", {});
-  assert.deepEqual(list.result.tools.map(tool => tool.name), ["get_user", "list_user_repos", "search_github", "list_repo_labels"]);
+  assert.deepEqual(list.result.tools.map(tool => tool.name), ["get_user", "list_user_repos", "list_org_repos", "search_github", "list_repo_labels"]);
   const call = await mcpCall(mcp, base, "tools/call", { name: "get_user", arguments: { login: "Deon-Trevor" } }, { "X-GitHub-Token": "mcp-token" });
   assert.equal(call.result.structuredContent.result.login, "Deon-Trevor");
   assert.equal(calls[1].headers.Authorization, "Bearer mcp-token");
@@ -44,8 +50,52 @@ test("REST and MCP forward request tokens through the same GitHub lookup", async
   const cors = await api(new Request(`${base}/api/v1/health`, { headers: { Origin: "https://other.example" } }));
   assert.equal(cors.status, 200);
   assert.equal(cors.headers.get("access-control-allow-origin"), "*");
+  assert.match(cors.headers.get("access-control-expose-headers"), /X-RateLimit-Resource/);
   const blocked = await onMcpRequest({ request: new Request(`${base}/mcp`, { method: "POST", headers: { Origin: "https://evil.example" } }) });
   assert.equal(blocked.status, 403);
+});
+
+test("REST and MCP preserve search sorting, text matches, repository order, and rate headers", async () => {
+  const calls = [];
+  const rateHeaders = {
+    "x-ratelimit-limit": "30", "x-ratelimit-remaining": "29", "x-ratelimit-used": "1",
+    "x-ratelimit-reset": "1800000000", "x-ratelimit-resource": "search", link: "<next>; rel=next",
+  };
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, headers: init.headers });
+    return new Response(JSON.stringify({ items: [{ text_matches: [{ fragment: "needle" }] }] }), { headers: rateHeaders });
+  };
+  const base = "https://github.syncpundit.io";
+  const api = request => handleApi(request, { fetchImpl });
+  const users = await api(new Request(`${base}/api/v1/search?type=users&q=lookalike&sort=joined&order=desc`));
+  assert.equal(calls[0].url, "https://api.github.com/search/users?q=lookalike&per_page=20&page=1&sort=joined&order=desc");
+  assert.equal(users.headers.get("x-ratelimit-resource"), "search");
+  assert.equal(users.headers.get("x-ratelimit-used"), "1");
+  assert.equal(users.headers.get("link"), "<next>; rel=next");
+  const code = await api(new Request(`${base}/api/v1/search?type=code&q=needle`));
+  assert.equal(calls[1].headers.Accept, "application/vnd.github.text-match+json");
+  assert.equal((await code.json()).items[0].text_matches[0].fragment, "needle");
+  await api(new Request(`${base}/api/v1/users/octocat/repos?sort=pushed`));
+  assert.equal(calls[2].url, "https://api.github.com/users/octocat/repos?per_page=30&page=1&sort=pushed");
+  await api(new Request(`${base}/api/v1/orgs/github/repos?sort=pushed`));
+  assert.equal(calls[3].url, "https://api.github.com/orgs/github/repos?per_page=30&page=1&sort=pushed&type=public");
+
+  const mcp = createHandler({ fetchImpl });
+  await mcpCall(mcp, base, "tools/call", { name: "search_github", arguments: { type: "commits", q: "needle", sort: "author-date", order: "asc" } });
+  assert.equal(calls[4].headers.Accept, "application/vnd.github.text-match+json");
+  assert.match(calls[4].url, /sort=author-date&order=asc/);
+  await mcpCall(mcp, base, "tools/call", { name: "list_org_repos", arguments: { login: "github", sort: "pushed" } });
+  assert.match(calls[5].url, /\/orgs\/github\/repos\?.*sort=pushed/);
+
+  const limited = await handleApi(new Request(`${base}/api/v1/search?type=users&q=x`), {
+    fetchImpl: async () => new Response(JSON.stringify({ message: "Secondary rate limit" }), {
+      status: 429, headers: { ...rateHeaders, "retry-after": "42" },
+    }),
+  });
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get("retry-after"), "42");
+  assert.equal(limited.headers.get("x-ratelimit-resource"), "search");
+  assert.equal(limited.headers.get("x-ratelimit-used"), "1");
 });
 
 test("the server token is the default and a caller token takes precedence", async () => {

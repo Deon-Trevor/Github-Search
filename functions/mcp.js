@@ -20,13 +20,17 @@ export function createHandler({ fetchImpl = fetch, defaultToken = "" } = {}) {
       });
     };
     tool("get_user", "Get a GitHub profile by exact login.", z.object({ login: z.string() }), "user");
-    tool("list_user_repos", "List public repositories for a GitHub user, newest updated first.", z.object({
+    const repoInput = z.object({
       login: z.string(), page: z.number().int().min(1).max(100).optional(), per_page: z.number().int().min(1).max(100).optional(),
-    }), "repos");
+      sort: z.enum(["created", "updated", "pushed", "full_name"]).optional(), direction: z.enum(["asc", "desc"]).optional(),
+    });
+    tool("list_user_repos", "List public repositories for a GitHub user.", repoInput, "repos");
+    tool("list_org_repos", "List public repositories for a GitHub organization.", repoInput, "orgRepos");
     tool("search_github", "Search GitHub repositories, users, code, commits, issues, or topics.", z.object({
       type: z.enum(["repositories", "users", "code", "commits", "issues", "topics"]),
       q: z.string().min(1).max(256), page: z.number().int().min(1).max(10).optional(),
-      per_page: z.number().int().min(1).max(100).optional(),
+      per_page: z.number().int().min(1).max(100).optional(), sort: z.string().regex(/^[A-Za-z0-9_+\-]{1,40}$/).optional(),
+      order: z.enum(["asc", "desc"]).optional(),
     }), "search");
     tool("list_repo_labels", "List labels for a GitHub repository.", z.object({
       owner: z.string(), repo: z.string(), page: z.number().int().min(1).max(100).optional(),

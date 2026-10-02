@@ -196,12 +196,13 @@
                     <h3>Profiles</h3>
                     <code><span>GET</span> /api/v1/users/:login</code>
                     <code><span>GET</span> /api/v1/users/:login/repos</code>
-                    <p>Read an exact profile or list its public repositories.</p>
+                    <code><span>GET</span> /api/v1/orgs/:login/repos</code>
+                    <p>Read an exact profile or list public user and organization repositories. Set <code>sort=pushed</code> for recent activity.</p>
                 </div>
                 <div class="endpoint-block">
                     <h3>Search</h3>
                     <code><span>GET</span> /api/v1/search?type=&amp;q=</code>
-                    <p>Search repositories, users, code, commits, issues, or topics. Add <code>page</code> and <code>per_page</code> to paginate.</p>
+                    <p>Search repositories, users, code, commits, issues, or topics. Add <code>sort</code>, <code>order</code>, <code>page</code>, and <code>per_page</code>.</p>
                 </div>
                 <div class="endpoint-block">
                     <h3>Labels</h3>
@@ -211,7 +212,7 @@
                 <div class="endpoint-block">
                     <h3>MCP</h3>
                     <code><span>POST</span> /mcp</code>
-                    <p>Streamable HTTP tools: <code>get_user</code>, <code>list_user_repos</code>, <code>search_github</code>, and <code>list_repo_labels</code>.</p>
+                    <p>Streamable HTTP tools: <code>get_user</code>, <code>list_user_repos</code>, <code>list_org_repos</code>, <code>search_github</code>, and <code>list_repo_labels</code>.</p>
                 </div>
             </div>
             <p class="endpoint-note">No app key. Requests use the site's shared GitHub allowance when configured. Send <code>X-GitHub-Token</code> to use your own. GitHub rate limits still apply. <a href="https://github.com/Deon-Trevor/Github-Search#rest-api" target="_blank" rel="noreferrer noopener">Setup and examples in the README ↗</a></p>

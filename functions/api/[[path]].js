@@ -4,6 +4,7 @@ const cors = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, OPTIONS",
   "access-control-allow-headers": "X-GitHub-Token",
+  "access-control-expose-headers": "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Reset, X-RateLimit-Resource, Retry-After, Link",
 };
 
 function json(status, value, headers = {}) {
@@ -25,6 +26,9 @@ function route(path, searchParams) {
   }
   if (parts[2] === "users" && parts[4] === "repos" && parts.length === 5) {
     return { operation: "repos", args: { login: parts[3], ...Object.fromEntries(searchParams) } };
+  }
+  if (parts[2] === "orgs" && parts[4] === "repos" && parts.length === 5) {
+    return { operation: "orgRepos", args: { login: parts[3], ...Object.fromEntries(searchParams) } };
   }
   if (parts[2] === "repos" && parts[5] === "labels" && parts.length === 6) {
     return { operation: "labels", args: { owner: parts[3], repo: parts[4], ...Object.fromEntries(searchParams) } };

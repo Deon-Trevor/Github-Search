@@ -20,12 +20,13 @@ Without a personal token, the browser app calls the site's REST API. If `GITHUB_
 | `GET /api/v1/health` | Health check |
 | `GET /api/v1/users/:login` | Exact profile |
 | `GET /api/v1/users/:login/repos` | User repositories |
+| `GET /api/v1/orgs/:login/repos` | Public organization repositories |
 | `GET /api/v1/repos/:owner/:repo/labels` | Repository labels |
 | `GET /api/v1/search?type=&q=` | Global search |
 
-Search types: `repositories`, `users`, `code`, `commits`, `issues`, `topics`. Search accepts `page` (1-10) and `per_page` (1-100). Repository and label lists accept `page` (1-100) and `per_page` (1-100). Defaults are 20 search results, 30 repositories, and 100 labels.
+Search types: `repositories`, `users`, `code`, `commits`, `issues`, `topics`. Search accepts `sort`, `order` (`asc` or `desc`), `page` (1-10), and `per_page` (1-100). For example, `type=users&sort=joined&order=desc` lists recently joined accounts first. Code and commit searches request GitHub's text-match metadata. User and organization repository lists accept `sort` (`created`, `updated`, `pushed`, `full_name`), `direction` (`asc` or `desc`), `page` (1-100), and `per_page` (1-100). Repository sorting defaults to `updated`; set `sort=pushed` for recent pushes. Label lists accept `page` and `per_page`. Defaults are 20 search results, 30 repositories, and 100 labels.
 
-Successful responses keep GitHub's JSON shape. GitHub errors return their status and a JSON `error` message. Rate limit and pagination headers are forwarded. Results are not cached.
+Successful responses keep GitHub's JSON shape. GitHub errors return their status and a JSON `error` message. The proxy forwards GitHub's `x-ratelimit-limit`, `x-ratelimit-remaining`, `x-ratelimit-used`, `x-ratelimit-reset`, `x-ratelimit-resource`, `retry-after`, and `link` headers when present, including on errors. Browser clients can read these headers across origins. Results are not cached.
 
 ```bash
 curl 'http://127.0.0.1:8788/api/v1/search?type=repositories&q=language:go&per_page=20'
@@ -37,10 +38,11 @@ Connect a Streamable HTTP MCP client to `http://127.0.0.1:8788/mcp`, or to `http
 
 - `get_user(login)`
 - `list_user_repos(login, page?, per_page?)`
+- `list_org_repos(login, page?, per_page?, sort?, direction?)`
 - `search_github(type, q, page?, per_page?)`
 - `list_repo_labels(owner, repo, page?, per_page?)`
 
-Each request is stateless. Tool results include GitHub JSON in `structuredContent.result` and as text. Clients that support custom headers can send `X-GitHub-Token` for their own rate limit allowance and authenticated search. The [main page](public/index.html#endpoints) has a short endpoint summary.
+`list_user_repos` also accepts `sort` and `direction`; `search_github` also accepts `sort` and `order`. Each request is stateless. Tool results include GitHub JSON in `structuredContent.result` and as text. Clients that support custom headers can send `X-GitHub-Token` for their own rate limit allowance and authenticated search. The [main page](public/index.html#endpoints) has a short endpoint summary.
 
 ## Optional site token
 
