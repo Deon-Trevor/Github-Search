@@ -4,6 +4,18 @@ import { githubPath, RequestError } from "../lib/github.js";
 import { handleApi, onRequest as onApiRequest } from "../functions/api/[[path]].js";
 import { createHandler, onRequest as onMcpRequest } from "../functions/mcp.js";
 import { API, setTokenProvider } from "../public/assets/api.js";
+import worker from "../src/worker.js";
+
+test("preview Worker routes REST and MCP before assets", async () => {
+  const assets = [];
+  const env = {ASSETS: {fetch(request) {assets.push(new URL(request.url).pathname); return new Response("asset");}}};
+  const base = "https://github-search-worker-preview.example";
+  assert.deepEqual(await (await worker.fetch(new Request(`${base}/api/v1/health`), env)).json(), {status:"ok"});
+  assert.equal((await worker.fetch(new Request(`${base}/api/v1/health`, {method:"POST"}), env)).status, 405);
+  assert.equal((await worker.fetch(new Request(`${base}/mcp`, {method:"POST", headers:{origin:"https://elsewhere.example"}}), env)).status, 403);
+  assert.equal(await (await worker.fetch(new Request(`${base}/`), env)).text(), "asset");
+  assert.deepEqual(assets, ["/"]);
+});
 
 test("GitHub paths stay inside the supported lookup contract", () => {
   assert.equal(githubPath("search", { type: "repositories", q: "owner:Deon-Trevor", page: 2 }), "/search/repositories?q=owner%3ADeon-Trevor&per_page=20&page=2");

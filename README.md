@@ -64,6 +64,17 @@ Cloudflare builds and deploys the static site and Pages Functions from that push
 
 No server process, Docker image, or deploy hook is needed for this Pages deployment. Without `GITHUB_TOKEN` or a caller token, GitHub's unauthenticated rate limits apply.
 
+### Worker migration preview
+
+`wrangler.worker.toml` defines a separate `github-search-worker-preview` Worker.
+It serves `public/` as static assets and routes `/api/*` and `/mcp` through the
+existing handlers. Run `npm ci`, `npm test`, and `npm run build:worker` to check
+the candidate locally; `npm run dev:worker` serves it on port 8789. These commands
+do not change the Pages project or its custom domains. Before any domain cutover,
+deploy the preview Worker, set its own encrypted `GITHUB_TOKEN` secret, and compare
+the home page, REST health/search, MCP tools, CORS, and both mirror domains against
+Pages. Only then move the custom domains and retire the Pages project.
+
 ## Files
 
 - `public/`: browser app and static assets
