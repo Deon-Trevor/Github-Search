@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { THEME_STORAGE_KEY, THEMES, normalizeTheme, nextTheme, loadTheme, saveTheme } from "../public/assets/theme.js";
 
 const memoryStorage = (initial = {}) => {
@@ -34,9 +35,40 @@ test("blocked or missing storage falls back to classic without throwing", () => 
   assert.doesNotThrow(() => saveTheme("detective", undefined));
 });
 
-test("the pre-paint script in index.html uses the same storage key and theme name", () => {
+test("storage access itself can fail without blocking load or save", () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  try {
+    Object.defineProperty(globalThis, "localStorage", { configurable: true, get() { throw new Error("SecurityError"); } });
+    assert.equal(loadTheme(), "classic");
+    assert.doesNotThrow(() => saveTheme("detective"));
+  } finally {
+    if (original) Object.defineProperty(globalThis, "localStorage", original);
+    else delete globalThis.localStorage;
+  }
+});
+
+test("the early script resolves both page and browser colors before CSS, including storage failure", () => {
   const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
-  assert.match(html, new RegExp(`localStorage\\.getItem\\("${THEME_STORAGE_KEY}"\\) === "detective"`));
+  const script = html.match(/<script id="theme-bootstrap">([\s\S]*?)<\/script>/)[1];
+  assert.ok(html.indexOf('id="theme-bootstrap"') < html.indexOf('rel="stylesheet"'));
+  for (const saved of ["detective", "classic", "unknown", null]) {
+    const dataset = {};
+    const attrs = {};
+    runInNewContext(script, {
+      localStorage: memoryStorage({ [THEME_STORAGE_KEY]: saved }),
+      document: { documentElement: { dataset }, querySelector: () => ({ setAttribute: (key, value) => { attrs[key] = value; } }) },
+    });
+    const expected = normalizeTheme(saved);
+    assert.equal(dataset.theme, expected);
+    assert.equal(attrs.content, THEMES[expected].themeColor);
+  }
+  for (const mode of ["getter", "method"]) {
+    const dataset = {};
+    const sandbox = { document: { documentElement: { dataset }, querySelector: () => ({ setAttribute() {} }) } };
+    Object.defineProperty(sandbox, "localStorage", { get() { if (mode === "getter") throw new Error("SecurityError"); return blockedStorage; } });
+    assert.doesNotThrow(() => runInNewContext(script, sandbox));
+    assert.equal(dataset.theme, "classic");
+  }
 });
 
 // WCAG 2 contrast ratio between two #rrggbb colors.
@@ -58,6 +90,7 @@ test("Detective theme text colors meet WCAG AA contrast (4.5:1) on their backgro
     ["ink", "paper"], ["ink", "surface"], ["ink-soft", "surface"], ["ink-soft", "paper"], ["muted", "surface"], ["muted", "paper"],
     ["signal-dark", "surface"], ["signal-dark", "paper"], ["signal", "surface"], ["on-signal", "signal"], ["on-ink", "ink"],
     ["ink", "field"], ["signal-dark", "error-wash"], ["tab-index-active", "ink"],
+    ["placeholder", "field"], ["surface", "ok"], ["surface", "danger"],
   ];
   for (const [fg, bg] of pairs) {
     const ratio = contrast(t[fg], t[bg]);

@@ -10,9 +10,16 @@
     <meta name="keywords" content="OSINT, GitHub, Sync_Pundit, Deon Trevor Mpofu, syncpundit" />
     <meta name="author" content="Sync_Pundit" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <!-- Resolve the initial theme before loading CSS. App initialization adopts this choice. -->
+    <script id="theme-bootstrap">
+        (() => {
+            let theme = "classic";
+            try { if (localStorage.getItem("gh-explorer-theme") === "detective") theme = "detective"; } catch (e) {}
+            document.documentElement.dataset.theme = theme;
+            document.querySelector('meta[name="theme-color"]').setAttribute("content", theme === "detective" ? "#0c0e11" : "#f4f1e9");
+        })();
+    </script>
     <link rel="stylesheet" href="assets/styles.css" />
-    <!-- Apply a saved theme before first paint to avoid a light flash. Key must match THEME_STORAGE_KEY in assets/theme.js. -->
-    <script>try { if (localStorage.getItem("gh-explorer-theme") === "detective") document.documentElement.dataset.theme = "detective"; } catch (e) {}</script>
 </head>
 
 <body class="app-bg">
@@ -92,6 +99,10 @@
                     <button id="btn-copy-profile-url" class="btn-small" type="button" disabled>Copy profile link</button>
                     <button id="btn-export-json" class="btn-small" type="button" disabled>Export JSON</button>
                     <button id="btn-export-csv" class="btn-small" type="button" disabled>Export CSV</button>
+                    <div class="repo-toggles" role="group" aria-label="Repository visibility">
+                        <label class="toggle"><input id="profile-hide-forks" type="checkbox" /> Hide forks</label>
+                        <label class="toggle"><input id="profile-hide-archived" type="checkbox" /> Hide archived</label>
+                    </div>
                 </div>
 
                 <div class="results-layout profile-layout">

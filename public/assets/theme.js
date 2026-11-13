@@ -25,18 +25,20 @@ export function nextTheme(current) {
 }
 
 /** Reads the saved theme. Storage can be blocked (private mode, sandboxed iframes), so failures mean "classic". */
-export function loadTheme(storage = globalThis.localStorage) {
+export function loadTheme(storage) {
     try {
-        return normalizeTheme(storage?.getItem(THEME_STORAGE_KEY));
+        const source = storage === undefined ? globalThis.localStorage : storage;
+        return normalizeTheme(source?.getItem(THEME_STORAGE_KEY));
     } catch {
         return "classic";
     }
 }
 
 /** Saves the choice; silently does nothing if storage is unavailable. */
-export function saveTheme(theme, storage = globalThis.localStorage) {
+export function saveTheme(theme, storage) {
     try {
-        storage?.setItem(THEME_STORAGE_KEY, normalizeTheme(theme));
+        const target = storage === undefined ? globalThis.localStorage : storage;
+        target?.setItem(THEME_STORAGE_KEY, normalizeTheme(theme));
     } catch {
         /* storage blocked: the theme still applies for this visit */
     }

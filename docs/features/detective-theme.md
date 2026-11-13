@@ -28,15 +28,17 @@ To make that possible, about fifteen colors that were hard-coded (white input ba
 | --- | --- |
 | `public/assets/styles.css` | The new tokens on `:root` (`--field`, `--on-ink`, `--on-signal`, `--hover-tint`, `--row-hover`, `--tab-index-active`, `--placeholder`, `--error-wash`, `--ok`, `--danger`, `--warn`, `--shadow`, `--backdrop`, `--grain`, `--signal-glow`), the `:root[data-theme="detective"]` block, the searchlight background and the `.theme-toggle` button. |
 | `public/assets/theme.js` | `normalizeTheme`, `nextTheme`, `loadTheme`, `saveTheme` and `applyTheme(theme, { toggle, themeColorMeta })`. Has no DOM imports, so the logic is unit-testable. |
-| `public/index.html` | The toggle button in the nav, and a one-line inline `<script>` in `<head>` that applies a saved theme before first paint. |
+| `public/index.html` | The toggle button and an early script before the stylesheet. The script resolves the saved choice and sets both the page theme and browser theme color. |
 | `public/assets/dom.js` | Caches `el.themeToggle` and `el.themeColorMeta`. |
-| `public/assets/events.js` | `init()` applies the saved theme. The toggle's click handler switches, saves, and shows a toast. |
+| `public/assets/events.js` | `init()` adopts the early script's choice without re-reading storage. The toggle's click handler switches, saves, and shows a toast. |
 
 Other details:
 
 - `color-scheme: dark` is set in the theme, so native controls (select dropdowns, checkboxes, scrollbars) also turn dark.
 - The `<meta name="theme-color">` switches too, so mobile browser chrome matches.
 - If `localStorage` is blocked (some private modes, sandboxed embeds), the theme still works for the visit. It just isn't remembered.
+- Accessing the storage object, reading it, and writing it can each fail independently. These failures are caught so the app still initializes and the toggle still works.
+- The early choice remains authoritative while modules load. A later storage change cannot reset the theme during initialization. If the early script did not run, the module uses the guarded storage fallback.
 
 ## Testing
 
