@@ -181,3 +181,12 @@ test("CSV export keeps zero counts and escapes quotes", async () => {
   );
   assert.equal(csv, 'name,description,stargazers_count,forks_count,language\n"demo","say ""hi""","0","0",""');
 });
+
+test("CSV export guards formula-like strings while preserving ordinary data", async () => {
+  const { toCsv } = await import("../public/assets/utils.js");
+  for (const text of ["=1+1", "+1+1", "-1+1", "@SUM(A1)", "\t=1+1", "\r=1+1", "\n=1+1", "  =1+1", "＝1+1", "＋1", "－1", "＠SUM(A1)"]) {
+    assert.equal(toCsv([{ text }], ["text"]), `text\n"'${text}"`);
+  }
+  assert.equal(toCsv([{ n: -1, zero: 0, flag: false, text: "ordinary", missing: undefined }], ["n", "zero", "flag", "text", "missing"]), 'n,zero,flag,text,missing\n"-1","0","false","ordinary",""');
+  assert.equal(toCsv([{ text: '=1+1";=2+2' }], ["text"]), 'text\n"\'=1+1"";=2+2"');
+});

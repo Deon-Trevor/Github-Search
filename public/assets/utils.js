@@ -16,7 +16,13 @@ export function setURL(key, value) {
 // Builds a CSV string from an array of objects. Uses `??` rather than `||`
 // so legitimate falsy values like 0 or false are kept instead of blanked.
 export function toCsv(rows, cols) {
-    const cell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const cell = (value) => {
+        let text = String(value ?? "");
+        // Repository text is untrusted. Keep formula-like strings as text
+        // when a spreadsheet first imports the CSV; preserve numeric values.
+        if (typeof value === "string" && /^(?:[\t\r\n]|\s*[=+\-@＝＋－＠])/u.test(text)) text = `'${text}`;
+        return `"${text.replace(/"/g, '""')}"`;
+    };
     return [
         cols.join(","),
         ...rows.map((row) => cols.map((col) => cell(row[col])).join(",")),
