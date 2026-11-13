@@ -115,6 +115,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .input-text:focus { border-color: var(--signal); outline-offset: 0; }
 .command-actions, .utility-row, .row-actions, .pager-controls, .detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .utility-row { padding: 0 0 26px; }
+.repo-toggles { display: flex; flex-wrap: wrap; gap: 14px; margin-left: auto; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); font-size: 12px; font-weight: 700; cursor: pointer; }
+.toggle input { width: 15px; height: 15px; margin: 0; accent-color: var(--signal); cursor: pointer; }
 .btn-primary, .btn-secondary, .btn-small, .btn-page, .btn-action, .btn-use-user { display: inline-flex; justify-content: center; align-items: center; gap: 14px; min-height: 36px; border: 1px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink); padding: 8px 13px; font-size: 12px; font-weight: 760; text-decoration: none; transition: background .16s ease, color .16s ease, transform .16s ease; }
 .btn-primary { min-height: 46px; background: var(--signal); border-color: var(--signal); color: #fff; white-space: nowrap; }
 .btn-primary:hover:not(:disabled) { background: var(--signal-dark); transform: translateY(-2px); }
@@ -265,6 +268,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .profile-command-grid, .finder-command-grid, .global-command-grid { grid-template-columns: 1fr; }
   .profile-command-grid .command-actions { grid-column: auto; }
   .utility-row { gap: 6px; }
+  .repo-toggles { margin-left: 0; width: 100%; }
   .result-row, .result-user { grid-template-columns: 1fr; gap: 12px; padding: 17px; }
   .result-user .avatar-sm { display: none; }
   .row-actions { justify-content: flex-start; }

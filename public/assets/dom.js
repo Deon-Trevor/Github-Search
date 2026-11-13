@@ -27,6 +27,8 @@ export const el = {
     repoPage: $("#repo-page"),
     sort: $("#profile-sort"),
     filter: $("#profile-filter"),
+    hideForks: $("#profile-hide-forks"),
+    hideArchived: $("#profile-hide-archived"),
     btnScan: $("#btn-scan"),
     btnClear: $("#btn-clear"),
     btnPrev: $("#btn-prev"),

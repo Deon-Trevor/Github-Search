@@ -6,6 +6,7 @@ import { el } from "./dom.js";
 import { state, PRESETS, BUILDER_TOKENS } from "./state.js";
 import { copy, setURL, toCsv } from "./utils.js";
 import { API, setTokenProvider, onRateUpdate } from "./api.js";
+import { filterRepos } from "./repo-filters.js";
 import {
     toast,
     setError,
@@ -128,16 +129,12 @@ function switchMode(mode) {
 }
 
 function applyFilters() {
-    const q = el.filter.value.trim().toLowerCase();
-    let repos = [...state.repos];
-    const sort = el.sort.value;
-    if (sort === "updated") repos.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-    else if (sort === "stars") repos.sort((a, b) => (b.stargazers_count || 0) - (a.stargazers_count || 0));
-    else if (sort === "name") repos.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-
-    state.filtered = q
-        ? repos.filter((repo) => `${repo.name || ""} ${repo.description || ""} ${repo.language || ""}`.toLowerCase().includes(q))
-        : repos;
+    state.filtered = filterRepos(state.repos, {
+        query: el.filter.value,
+        sort: el.sort.value,
+        hideForks: el.hideForks.checked,
+        hideArchived: el.hideArchived.checked,
+    });
     state.page = 1;
     renderRepoPage();
 }
@@ -408,6 +405,8 @@ function bindEvents() {
         el.username.value = "";
         el.filter.value = "";
         el.sort.value = "updated";
+        el.hideForks.checked = false;
+        el.hideArchived.checked = false;
         setURL("user", null);
         markBusy(el.btnScan, false);
         resetProfileState();
@@ -415,6 +414,8 @@ function bindEvents() {
     });
 
     el.sort.addEventListener("change", applyFilters);
+    el.hideForks.addEventListener("change", applyFilters);
+    el.hideArchived.addEventListener("change", applyFilters);
     el.filter.addEventListener("input", () => {
         clearTimeout(applyFilters._t);
         applyFilters._t = setTimeout(applyFilters, 150);
