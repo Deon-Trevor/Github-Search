@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler pages dev public --port 8788",
+    "dev:worker": "wrangler dev --config wrangler.worker.toml --port 8789",
+    "build:worker": "wrangler deploy --config wrangler.worker.toml --dry-run --outdir output/worker-preview",
     "test": "node --test"
   },
   "engines": {

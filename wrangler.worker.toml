@@ -1,0 +1,10 @@
+# Preview Worker only. The existing Pages project and custom domains stay in place.
+name = "github-search-worker-preview"
+main = "./src/worker.js"
+compatibility_date = "2026-10-25"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/mcp"]
