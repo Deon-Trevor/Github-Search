@@ -4,7 +4,7 @@
 
 import { el } from "./dom.js";
 import { state, PRESETS, BUILDER_TOKENS } from "./state.js";
-import { copy, setURL } from "./utils.js";
+import { copy, setURL, toCsv } from "./utils.js";
 import { API, setTokenProvider, onRateUpdate } from "./api.js";
 import { filterRepos } from "./repo-filters.js";
 import {
@@ -449,10 +449,7 @@ function bindEvents() {
     el.btnExportCsv.addEventListener("click", () => {
         if (!state.filtered.length || !state.user) return;
         const cols = ["name", "html_url", "description", "language", "stargazers_count", "forks_count", "watchers", "updated_at"];
-        const csv = [
-            cols.join(","),
-            ...state.filtered.map((r) => cols.map((c) => `"${String(r[c] || "").replace(/"/g, '""')}"`).join(",")),
-        ].join("\n");
+        const csv = toCsv(state.filtered, cols);
         const blob = new Blob([csv], { type: "text/csv" });
         const a = Object.assign(document.createElement("a"), {
             href: URL.createObjectURL(blob),
