@@ -10,6 +10,15 @@
     <meta name="keywords" content="OSINT, GitHub, Sync_Pundit, Deon Trevor Mpofu, syncpundit" />
     <meta name="author" content="Sync_Pundit" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <!-- Resolve the initial theme before loading CSS. App initialization adopts this choice. -->
+    <script id="theme-bootstrap">
+        (() => {
+            let theme = "classic";
+            try { if (localStorage.getItem("gh-explorer-theme") === "detective") theme = "detective"; } catch (e) {}
+            document.documentElement.dataset.theme = theme;
+            document.querySelector('meta[name="theme-color"]').setAttribute("content", theme === "detective" ? "#0c0e11" : "#f4f1e9");
+        })();
+    </script>
     <link rel="stylesheet" href="assets/styles.css" />
 </head>
 
@@ -20,6 +29,7 @@
             <div class="site-links">
                 <a class="site-link active" href="./">Workspace</a>
                 <a class="site-link" href="#endpoints">API &amp; MCP</a>
+                <button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Detective mode" title="Detective mode: a night theme for the world's greatest detective"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4.5 4.5"/></svg><span class="theme-toggle-label">Detective mode</span></button>
                 <a class="site-link external" href="https://github.com/Deon-Trevor/Github-Search" target="_blank" rel="noreferrer noopener">Source <span aria-hidden="true">↗</span></a>
             </div>
         </nav>

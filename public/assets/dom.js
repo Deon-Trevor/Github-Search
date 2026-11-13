@@ -73,6 +73,10 @@ export const el = {
     repoModalBody: $("#repo-detail-body"),
     repoModalClose: $("#repo-detail-close"),
 
+    // Theme
+    themeToggle: $("#theme-toggle"),
+    themeColorMeta: $('meta[name="theme-color"]'),
+
     // System
     errorBanner: $("#error-banner"),
     toastContainer: $("#toast-container"),
