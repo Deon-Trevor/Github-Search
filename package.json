@@ -11,10 +11,10 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@modelcontextprotocol/server": "^2.3.0",
+    "@modelcontextprotocol/server": "^2.4.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "wrangler": "^4.156.0"
+    "wrangler": "^4.159.0"
   }
 }
