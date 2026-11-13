@@ -172,3 +172,12 @@ async function mcpCall(handler, base, method, params, extraHeaders = {}) {
   const line = body.split("\n").find(value => value.startsWith("data: "));
   return JSON.parse(line.slice(6));
 }
+
+test("CSV export keeps zero counts and escapes quotes", async () => {
+  const { toCsv } = await import("../public/assets/utils.js");
+  const csv = toCsv(
+    [{ name: "demo", description: 'say "hi"', stargazers_count: 0, forks_count: 0, language: null }],
+    ["name", "description", "stargazers_count", "forks_count", "language"],
+  );
+  assert.equal(csv, 'name,description,stargazers_count,forks_count,language\n"demo","say ""hi""","0","0",""');
+});
