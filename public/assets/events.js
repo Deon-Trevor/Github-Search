@@ -6,6 +6,7 @@ import { el } from "./dom.js";
 import { state, PRESETS, BUILDER_TOKENS } from "./state.js";
 import { copy, setURL } from "./utils.js";
 import { API, setTokenProvider, onRateUpdate } from "./api.js";
+import { applyTheme, loadTheme, nextTheme, saveTheme } from "./theme.js";
 import {
     toast,
     setError,
@@ -382,6 +383,8 @@ function runRowPrimaryAction(row) {
     }
 }
 
+const themeTargets = () => ({ toggle: el.themeToggle, themeColorMeta: el.themeColorMeta });
+
 function bindEvents() {
     el.token.addEventListener("input", syncTokenFromInput);
     el.token.addEventListener("change", syncTokenFromInput);
@@ -390,6 +393,12 @@ function bindEvents() {
         if (!el.authMenu.open) return;
         syncTokenFromInput();
         tokenWatch = setInterval(syncTokenFromInput, 200);
+    });
+    el.themeToggle.addEventListener("click", () => {
+        const theme = nextTheme(document.documentElement.dataset.theme);
+        applyTheme(theme, themeTargets());
+        saveTheme(theme);
+        toast(theme === "detective" ? "Detective mode on. The world's greatest detective is on the case." : "Classic mode on.", "info", 3200);
     });
     el.tokenVerify.addEventListener("click", verifyPersonalToken);
     el.tokenClear.addEventListener("click", () => {
@@ -594,6 +603,7 @@ function initDeepLink() {
 }
 
 export function init() {
+    applyTheme(loadTheme(), themeTargets());
     setTokenProvider(() => {
         syncTokenFromInput();
         return el.token.value.trim();
